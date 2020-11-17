@@ -17,10 +17,10 @@ foreach qsys $ip_quartus_qsys {
     return -code error "Running qsys-script"
   }
   if { [catch { exec >@stdout 2>@stderr qsys-generate $ipdir/main.qsys --block-symbol-file --output-directory=$ipdir/main --family=$FAMILY --part=$part_fpga }] } {
-    return -code error "Running qsys-generate: $msg"
+    return -code error "Running qsys-generate"
   }
   if { [catch { exec >@stdout 2>@stderr qsys-generate $ipdir/main.qsys --synthesis=VERILOG --output-directory=$ipdir/main --family=$FAMILY --part=$part_fpga }] } {
-    return -code error "Running qsys-generate: $msg"
+    return -code error "Running qsys-generate"
   }
   set_global_assignment -name QIP_FILE $ipdir/main/synthesis/main.qip
 }

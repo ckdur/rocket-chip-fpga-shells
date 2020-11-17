@@ -13,31 +13,22 @@ source [file join $scriptdir "init.tcl"]
 source [file join $scriptdir "synth.tcl"]
 
 # Pre-implementation debug
-#if {[info exists pre_impl_debug_tcl]} {
-#  source [file join $scriptdir $pre_impl_debug_tcl]
-#}
+if {[info exists pre_impl_debug_tcl]} {
+  source [file join $scriptdir $pre_impl_debug_tcl]
+}
 
-# Post synthesis optimization
-#source [file join $scriptdir "opt.tcl"]
-
-# Post-opt debug 
-#if {[info exists post_opt_debug_tcl]} {
-#  source [file join $scriptdir $post_opt_debug_tcl]
-#}
-
-# Place the design
-#source [file join $scriptdir "place.tcl"]
-
-# Route the design
-#source [file join $scriptdir "route.tcl"]
+# Fitter (Takes care of the place & route)
+source [file join $scriptdir "fit.tcl"]
 
 # Generate bitstream and save verilog netlist
-#source [file join $scriptdir "bitstream.tcl"]
+source [file join $scriptdir "assembly.tcl"]
 
 # Post-implementation debug
-#if {[info exists post_impl_debug_tcl]} {
-#  source [file join $scriptdir $post_impl_debug_tcl]
-#}
+if {[info exists post_impl_debug_tcl]} {
+  source [file join $scriptdir $post_impl_debug_tcl]
+}
 
-# Create reports for the current implementation
-#source [file join $scriptdir "report.tcl"]
+# Do the timing analysis
+source [file join $scriptdir "sta.tcl"]
+
+# TODO: Export the reports in a place where is visible
