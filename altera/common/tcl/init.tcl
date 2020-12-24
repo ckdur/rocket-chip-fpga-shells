@@ -13,14 +13,14 @@ foreach ip_quartus_tcl $ip_quartus_tcls {
 
 # TODO Generate main QSYS IP
 foreach qsys $ip_quartus_qsys {
-  if { [catch { exec >@stdout 2>@stderr qsys-script --script=$qsys }] } {
-    return -code error "Running qsys-script"
-  }
-  exec mv main.qsys $ipdir/main.qsys
-  if { [catch { exec >@stdout 2>@stderr qsys-generate $ipdir/main.qsys --block-symbol-file --output-directory=$ipdir/main --family=$FAMILY --part=$part_fpga }] } {
+#  if { [catch { exec >@stdout 2>@stderr qsys-script --script=$qsys }] } {
+#    return -code error "Running qsys-script"
+#  }
+#  exec mv main.qsys $ipdir/main.qsys
+  if { [catch { exec >@stdout 2>@stderr qsys-generate $qsys --block-symbol-file --output-directory=$ipdir/main --family=$FAMILY --part=$part_fpga }] } {
     return -code error "Running qsys-generate"
   }
-  if { [catch { exec >@stdout 2>@stderr qsys-generate $ipdir/main.qsys --synthesis=VERILOG --output-directory=$ipdir/main --family=$FAMILY --part=$part_fpga }] } {
+  if { [catch { exec >@stdout 2>@stderr qsys-generate $qsys --synthesis=VERILOG --output-directory=$ipdir/main --family=$FAMILY --part=$part_fpga }] } {
     return -code error "Running qsys-generate"
   }
   set_global_assignment -name QIP_FILE $ipdir/main/synthesis/main.qip
