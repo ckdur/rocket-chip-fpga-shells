@@ -43,6 +43,12 @@ class XDC(val name: String)
   def clockDedicatedRouteFalse(io: IOPin) {
     addConstraint(s"set_property CLOCK_DEDICATED_ROUTE {FALSE} [get_nets ${io.sdcPin}]")
   }
+  def addDriveStrength(io: IOPin, drive: String) {
+    addConstraint(s"set_property DRIVE {${drive}} ${io.sdcPin}")
+  }
+  def addIbufLowPower(io: IOPin, value: String) {
+    addConstraint(s"set_property IBUF_LOW_PWR ${value} ${io.sdcPin}")
+  }
 }
 
 abstract class XilinxShell()(implicit p: Parameters) extends IOShell
