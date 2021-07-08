@@ -11,6 +11,11 @@ foreach ip_quartus_tcl $ip_quartus_tcls {
   source $ip_quartus_tcl
 }
 
+# Add the SDC files
+foreach file_sdc $ip_quartus_sdc {
+  set_global_assignment -name SDC_FILE $file_sdc
+}
+
 # TODO Generate main QSYS IP
 foreach qsys $ip_quartus_qsys {
 #  if { [catch { exec >@stdout 2>@stderr qsys-script --script=$qsys }] } {
