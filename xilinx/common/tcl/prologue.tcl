@@ -75,12 +75,20 @@ set_param messaging.defaultLimit 1000000
 
 # Set the board part, target language, default library, and IP directory
 # paths for the current project
-set_property -dict [list \
-	BOARD_PART $part_board \
-	TARGET_LANGUAGE {Verilog} \
-	DEFAULT_LIB {xil_defaultlib} \
-	IP_REPO_PATHS $ipdir \
-	] [current_project]
+if {$board=={sakurax}} {
+    set_property -dict [list \
+	    TARGET_LANGUAGE {Verilog} \
+	    DEFAULT_LIB {xil_defaultlib} \
+	    IP_REPO_PATHS $ipdir \
+	    ] [current_project]
+} else {
+    set_property -dict [list \
+	    BOARD_PART $part_board \
+	    TARGET_LANGUAGE {Verilog} \
+	    DEFAULT_LIB {xil_defaultlib} \
+	    IP_REPO_PATHS $ipdir \
+	    ] [current_project]
+}
 
 if {[get_filesets -quiet sources_1] eq ""} {
 	create_fileset -srcset sources_1
