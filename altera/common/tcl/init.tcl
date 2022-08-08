@@ -28,7 +28,8 @@ foreach qsys $ip_quartus_qsys {
   if { [catch { exec >@stdout 2>@stderr qsys-generate $qsys --synthesis=VERILOG --output-directory=$ipdir/main --family=$FAMILY --part=$part_fpga }] } {
     return -code error "Running qsys-generate"
   }
-  set_global_assignment -name QIP_FILE $ipdir/main/synthesis/main.qip
+  set fbasename [file rootname [file tail $qsys]]
+  set_global_assignment -name QIP_FILE $ipdir/main/synthesis/$fbasename.qip
 }
 
 # Optional board-specific ip script
