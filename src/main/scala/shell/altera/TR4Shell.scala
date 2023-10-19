@@ -304,8 +304,8 @@ class TR4ShellImpl(outer: TR4Shell) extends LazyRawModuleImp(outer) {
   outer.tdc.addIOStandard(IOPin(reset), "1.5V")
   val reset_ibuf = Module(new ALT_IOBUF)
   attach(reset_ibuf.io.io, reset)
-  outer.resetPin := reset_ibuf.asInput()
-  outer.pllReset := outer.resetPin // TODO: For now the same
+  outer.resetPin := ~reset_ibuf.asInput()
+  outer.pllReset := outer.resetPin
 
   /*val HSMA = IO(new AlteraHSMC)
   val HSMB = IO(new AlteraHSMC)
