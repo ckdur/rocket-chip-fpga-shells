@@ -91,7 +91,11 @@ class clkctrl extends BlackBox {
   })
 }
 
-class AlteraHSMC(val on1: Boolean = true, val on2: Boolean = true) extends Bundle {
+case class AlteraHSMCParams(on1: Boolean = true, on2: Boolean = true)
+
+class AlteraHSMC(c: AlteraHSMCParams) extends Bundle {
+  val on1: Boolean = c.on1
+  val on2: Boolean = c.on2
   val CLKIN0 = Input(Bool())
   val CLKIN_n1 = Input(Bool())
   val CLKIN_n2 = Input(Bool())
@@ -109,7 +113,10 @@ class AlteraHSMC(val on1: Boolean = true, val on2: Boolean = true) extends Bundl
   val TX_p = Vec(17, Analog(1.W))
 }
 
-class AlteraFMC(val ext: Boolean = false, val xcvr: Boolean = false) extends Bundle {
+case class AlteraFMCParams(ext: Boolean = false, xcvr: Boolean = false)
+class AlteraFMC(c: AlteraFMCParams) extends Bundle {
+  val ext: Boolean = c.ext
+  val xcvr: Boolean = c.xcvr
   val CLK_M2C_p = Vec(2, Analog(1.W))
   val CLK_M2C_n = Vec(2, Analog(1.W))
   val HA_RX_CLK_p = ext.option(Analog(1.W))

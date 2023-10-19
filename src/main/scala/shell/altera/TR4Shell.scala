@@ -239,6 +239,51 @@ class UARTTR4ShellPlacer(val shell: TR4Shell, val which: TR4GPIOGroup, val shell
   def place(designInput: UARTDesignInput) = new UARTTR4PlacedOverlay(shell, which, valName.name, designInput, shellInput)
 }
 
+// HSMC Pin definitions
+class TR4HSMCA extends HasAlteraHSMCLocs {
+  val CLKIN0 = "PIN_C10"
+  val CLKIN_n1 = "PIN_AE5"
+  val CLKIN_n2 = "PIN_AC5"
+  val CLKIN_p1 = "PIN_AF6"
+  val CLKIN_p2 = "PIN_AC6"
+  val D = Seq("PIN_AK8", "PIN_AP6", "PIN_AK7", "PIN_AP5")
+  val OUT0 = "PIN_D10"
+  val OUT_n1 = "PIN_R11"
+  val OUT_p1 = "PIN_R12"
+  val OUT_n2 = "PIN_G10"
+  val OUT_p2 = "PIN_H10"
+  val RX_n = Seq("PIN_AN5", "PIN_AM5", "PIN_AL5", "PIN_AK5", "PIN_AJ5", "PIN_AH5", "PIN_AG5", "PIN_AC8", "PIN_E10",
+    "PIN_F9", "PIN_C9", "PIN_F6", "PIN_F5", "PIN_E7", "PIN_C8", "PIN_C5", "PIN_C7")
+  val RX_p = Seq("PIN_AN6", "PIN_AM6", "PIN_AL6", "PIN_AK6", "PIN_AJ6", "PIN_AH6", "PIN_AG6", "PIN_AB9", "PIN_F10",
+    "PIN_G9", "PIN_D9", "PIN_G6", "PIN_G5", "PIN_F7", "PIN_D8", "PIN_D5", "PIN_D7")
+  val TX_n = Seq("PIN_AG9", "PIN_AH8", "PIN_AG7", "PIN_AF10", "PIN_AD9", "PIN_AB12", "PIN_AB10", "PIN_T12", "PIN_P13",
+    "PIN_N10", "PIN_M12", "PIN_L10", "PIN_L11", "PIN_J8", "PIN_J9", "PIN_G7", "PIN_J10")
+  val TX_p = Seq("PIN_AG10", "PIN_AH9", "PIN_AG8", "PIN_AF11", "PIN_AD10", "PIN_AB13", "PIN_AB11", "PIN_T13", "PIN_R13",
+    "PIN_N11", "PIN_N12", "PIN_M10", "PIN_M11", "PIN_K8", "PIN_K9", "PIN_H7", "PIN_K10")
+}
+
+class TR4HSMCB extends HasAlteraHSMCLocs {
+  val CLKIN0 = "PIN_AP15"
+  val CLKIN_n1 = "PIN_AU7"
+  val CLKIN_n2 = "PIN_AW14"
+  val CLKIN_p1 = "PIN_AT7"
+  val CLKIN_p2 = "PIN_AV14"
+  val D = Seq("PIN_AD15", "PIN_AV13", "PIN_AE15", "PIN_AW13")
+  val OUT0 = "PIN_AN15"
+  val OUT_n1 = "PIN_AP10"
+  val OUT_p1 = "PIN_AN10"
+  val OUT_n2 = "PIN_AJ10"
+  val OUT_p2 = "PIN_AH10"
+  val RX_n = Seq("PIN_AW10", "PIN_AU9", "PIN_AW7", "PIN_AW5", "PIN_AW4", "PIN_AW8", "PIN_AT5", "PIN_AU6", "PIN_AR8",
+    "PIN_AU8", "PIN_AU10", "PIN_AV11", "PIN_AT13", "PIN_AK13", "PIN_AJ14", "PIN_AF14", "PIN_AM13")
+  val RX_p = Seq("PIN_AV10", "PIN_AT9", "PIN_AV7", "PIN_AW6", "PIN_AV5", "PIN_AV8", "PIN_AR5", "PIN_AT6", "PIN_AP8",
+    "PIN_AT8", "PIN_AT10", "PIN_AU11", "PIN_AR13", "PIN_AJ13", "PIN_AH14", "PIN_AE14", "PIN_AL13")
+  val TX_n = Seq("PIN_AL15", "PIN_AU14", "PIN_AW11", "PIN_AM14", "PIN_AU12", "PIN_AN14", "PIN_AG15", "PIN_AP9",
+    "PIN_AM8", "PIN_AL9", "PIN_AM10", "PIN_AJ11", "PIN_AH12", "PIN_AE12", "PIN_AG13", "PIN_AD12", "PIN_AP7")
+  val TX_p = Seq("PIN_AN13", "PIN_AT14", "PIN_AW12", "PIN_AL14", "PIN_AT12", "PIN_AP13", "PIN_AG14", "PIN_AN9",
+    "PIN_AL8", "PIN_AK9", "PIN_AL10", "PIN_AH11", "PIN_AG12", "PIN_AE13", "PIN_AF13", "PIN_AD13", "PIN_AN7")
+}
+
 abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
 {
   val pllFactory = new PLLFactory(this, 10, p => Module(new QsysALTPLL(PLLCalcParameters(p))))
@@ -267,7 +312,10 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
   val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashTR4ShellPlacer(this, TR4GPIOGroup(qspiseq), SPIFlashShellInput())(ValName(s"qspi")))
   val gpioseq   = Seq(1 -> 24, 1 -> 25, 1 -> 26, 1 -> 27)
   val gpio      = Overlay(GPIOOverlayKey, new GPIOPeripheralTR4ShellPlacer(this, TR4GPIOGroup(gpioseq), GPIOShellInput()))
-  
+  val hsmc      = Seq(
+    Overlay(AlteraHSMCOverlayKey, new AlteraHSMCTR4ShellPlacer(this, new TR4HSMCA, AlteraHSMCShellInput("A"))(ValName("HSMC_A"))),
+    Overlay(AlteraHSMCOverlayKey, new AlteraHSMCTR4ShellPlacer(this, new TR4HSMCB, AlteraHSMCShellInput("B"))(ValName("HSMC_B")))
+  )
 
   /*def memEnable: Boolean = true
   val mem_a = memEnable.option(IO(Output(Bits((15 + 1).W))))
