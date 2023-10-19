@@ -33,9 +33,21 @@ class AlteraShellTcl(val name: String)
   def addIbufLowPower(io: IOPin, value: String) {} // TODO: Unimplemented
 }
 
+class AlteraSDC(name: String) extends SDC(name) {
+  // A version of the SDC but for Quartus, as SDC quartus does not support some stuff
+  override def addClock(name: => String, pin: => IOPin, freqMHz: => Double, jitterNs: => Double = 0.5) {
+    addRawClock(s"create_clock -name ${name} -period ${1000 / freqMHz} ${pin.sdcPin}")
+    // addRawClock(s"set_input_jitter ${name} ${jitterNs}") // Not supported
+  }
+
+  override def addGroup(clocks: => Seq[String] = Nil, pins: => Seq[IOPin] = Nil): Unit = {
+    // Unimplemented
+  }
+}
+
 abstract class AlteraShell()(implicit p: Parameters) extends IOShell
 {
-  val sdc = new SDC("shell.sdc")
+  val sdc = new AlteraSDC("shell.sdc")
   val tdc = new AlteraShellTcl("shell.quartus.tcl")
   def pllReset: ModuleValue[Bool]
 

@@ -3,7 +3,7 @@ package sifive.fpgashells.shell.altera
 import freechips.rocketchip.diplomacy._
 import sifive.fpgashells.shell._
 
-abstract class LEDAlteraPlacedOverlay(name: String, di: LEDDesignInput, si: LEDShellInput, boardPin: Option[String] = None, packagePin: Option[String] = None, ioStandard: String = "LVCMOS33")
+abstract class LEDAlteraPlacedOverlay(name: String, di: LEDDesignInput, si: LEDShellInput, boardPin: Option[String] = None, packagePin: Option[String] = None, ioStandard: String = "1.5V")
   extends LEDPlacedOverlay(name, di, si)
 {
   def shell: AlteraShell

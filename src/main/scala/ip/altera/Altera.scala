@@ -202,7 +202,7 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
   def getReset = Some(io.areset)
   def getLocked = io.locked
   def getClockNames = Seq.tabulate(c.req.size) { i => // TODO: Implement this ok
-    s"${c.name}/inst/altpll_0/c${i}"
+    s"${c.name}/altpll_0/c${i}"
   }
   def tieoffextra = {
     io.read := false.B
@@ -218,8 +218,8 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
   }.mkString
 
   val outputs = c.req.zipWithIndex.map { case (r, i) =>
-    s"""set_instance_parameter_value altpll_0 {CLK${i}_DUTY_CYCLE} {${r.dutyCycle}}
-       |set_instance_parameter_value altpll_0 {CLK${i}_PHASE_SHIFT} {${r.phaseDeg}}
+    s"""set_instance_parameter_value altpll_0 {CLK${i}_DUTY_CYCLE} {${r.dutyCycle.toInt}}
+       |set_instance_parameter_value altpll_0 {CLK${i}_PHASE_SHIFT} {${r.phaseDeg.toInt}}
        |#set_instance_parameter_value altpll_0 {CLK${i}_MULTIPLY_BY} {${c.mults(i)}}
        |#set_instance_parameter_value altpll_0 {CLK${i}_DIVIDE_BY} {${c.divs(i)}}
        |""".stripMargin
@@ -248,7 +248,7 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
        |${used}
        |
        |set_instance_parameter_value altpll_0 {COMPENSATE_CLOCK} {CLK0}
-       |set_instance_parameter_value altpll_0 {INCLK0_INPUT_FREQUENCY} {${itimeps}}
+       |set_instance_parameter_value altpll_0 {INCLK0_INPUT_FREQUENCY} {${itimeps.toInt}}
        |set_instance_parameter_value altpll_0 {INCLK1_INPUT_FREQUENCY} {}
        |set_instance_parameter_value altpll_0 {INTENDED_DEVICE_FAMILY} {Stratix IV}
        |
@@ -260,9 +260,6 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
        |set_interconnect_requirement {$$system} {qsys_mm.enableEccProtection} {FALSE}
        |set_interconnect_requirement {$$system} {qsys_mm.insertDefaultSlave} {FALSE}
        |set_interconnect_requirement {$$system} {qsys_mm.maxAdditionalLatency} {1}
-       |
-       |# Connect
-       |add_connection altpll_0.
        |
        |save_system {${moduleName}.qsys}
        |

@@ -4,6 +4,7 @@
 # http://wiki.tcl.tk/1730
 set ip_quartus_tcls {}
 set ip_quartus_qsys {}
+set ip_quartus_qsys_tcls {}
 set ip_quartus_sdc {}
 
 while {[llength $argv]} {
@@ -25,14 +26,11 @@ while {[llength $argv]} {
     -ip-quartus-qsys {
       set argv [lassign $argv[set argv {}] ip_quartus_qsys]
     }
+    -ip-quartus-qsys-tcls {
+      set argv [lassign $argv[set argv {}] ip_quartus_qsys_tcls]
+    }
     -ip-quartus-sdc {
       set argv [lassign $argv[set argv {}] ip_quartus_sdc]
-    }
-    -pre-impl-debug-tcl {
-      set argv [lassign $argv[set argv {}] pre_impl_debug_tcl]
-    }
-    -post-impl-debug-tcl {
-      set argv [lassign $argv[set argv {}] post_impl_debug_tcl]
     }
     -env-var-srcs {
       set argv [lassign $argv[set argv {}] env_var_srcs]
@@ -125,7 +123,7 @@ proc load_vsrc_manifest {vsrc_manifest} {
     }
   }
   # Iterate the files in relative_files
-  foreach fi {*}$relative_files {
+  foreach fi $relative_files {
     if {[regexp {^.*\.(v|vh)$} $fi]} {
       set_global_assignment -name VERILOG_FILE $fi
     } elseif {[regexp {^.*\.(sv|svh)$} $fi]} {
@@ -133,7 +131,6 @@ proc load_vsrc_manifest {vsrc_manifest} {
     } elseif {[regexp {^.*\.(vhd|vhdl)$} $fi]} {
       set_global_assignment -name VHDL_FILE $fi
     } else {
-      puts "Putting source file $fi"
       set_global_assignment -name SOURCE_FILE $fi
     }
   }

@@ -218,7 +218,6 @@ class UARTTR4PlacedOverlay(val shell: TR4Shell, val which: TR4GPIOGroup, name: S
   extends UARTAlteraPlacedOverlay(name, designInput, shellInput, false)
 {
   shell { InModuleBody {
-    val gpio = GPIOTR4PinConstraints.gpio
     val iopins = Seq(IOPin(io.rxd),
       IOPin(io.txd))
     val packagePinsWithPackageIOs = iopins.zip(which.elem).map {
@@ -231,7 +230,6 @@ class UARTTR4PlacedOverlay(val shell: TR4Shell, val which: TR4GPIOGroup, name: S
       shell.tdc.addPackagePin(io, pin)
       shell.tdc.addIOStandard(io, "1.8 V")
     }
-    println("UART Done")
   } }
 }
 
@@ -262,11 +260,11 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
     Seq(1 ->  6, 1 ->  7, 1 ->  4, 1 ->  5, 1 -> 30, 1 -> 31),
     Seq(1 -> 14, 1 -> 15, 1 -> 12, 1 -> 13, 1 -> 32, 1 -> 33),
     Seq(1 -> 10, 1 -> 11, 1 ->  8, 1 ->  9, 1 -> 34, 1 -> 35))
-  val spi       = spiseq.zipWithIndex.map{case (s, i) => Overlay(SPIOverlayKey, new SPITR4ShellPlacer(this, TR4GPIOGroup(s), SPIShellInput(i)))}
+  val spi       = spiseq.zipWithIndex.map{case (s, i) => Overlay(SPIOverlayKey, new SPITR4ShellPlacer(this, TR4GPIOGroup(s), SPIShellInput(i))(ValName(s"spi_${i}")))}
   val jtagseq   = Seq(1 ->  0, 1 ->  1, 1 ->  2, 1 ->  3)
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugTR4ShellPlacer(this, TR4GPIOGroup(jtagseq), JTAGDebugShellInput()))
   val qspiseq   = Seq(1 -> 20, 1 -> 21, 1 -> 18, 1 -> 19, 1 -> 28, 1 -> 29)
-  val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashTR4ShellPlacer(this, TR4GPIOGroup(qspiseq), SPIFlashShellInput()))
+  val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashTR4ShellPlacer(this, TR4GPIOGroup(qspiseq), SPIFlashShellInput())(ValName(s"qspi")))
   val gpioseq   = Seq(1 -> 24, 1 -> 25, 1 -> 26, 1 -> 27)
   val gpio      = Overlay(GPIOOverlayKey, new GPIOPeripheralTR4ShellPlacer(this, TR4GPIOGroup(gpioseq), GPIOShellInput()))
   
@@ -299,9 +297,11 @@ class TR4ShellImpl(outer: TR4Shell) extends LazyRawModuleImp(outer) {
   val FAN_CTRL = IO(Output(Bool()))
   FAN_CTRL := true.B
   outer.tdc.addPackagePin(FAN_CTRL, "PIN_B17")
+  outer.tdc.addIOStandard(FAN_CTRL, "1.5V")
 
   val reset = IO(Analog(1.W))
   outer.tdc.addPackagePin(IOPin(reset), "PIN_L19")
+  outer.tdc.addIOStandard(IOPin(reset), "1.5V")
   val reset_ibuf = Module(new ALT_IOBUF)
   attach(reset_ibuf.io.io, reset)
   outer.resetPin := reset_ibuf.asInput()

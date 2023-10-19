@@ -14,7 +14,10 @@ abstract class GPIOAlteraPlacedOverlay(name: String, di: GPIODesignInput, si: GP
   shell { InModuleBody {
     tlgpioSink.bundle.pins.zipWithIndex.foreach{ case (tlpin, idx) => {
       val m = Module(new ALT_IOBUF)
-      m.fromBase(tlpin.toBasePin())
+      m.io.i := tlpin.o.oval
+      m.io.oe := tlpin.o.oe
+      tlpin.i.ival := m.io.o
+      // m.fromBase(tlpin.toBasePin()) // This doesn't work
       attach(m.io.io, io.gpio(idx))
     } }
   } }
