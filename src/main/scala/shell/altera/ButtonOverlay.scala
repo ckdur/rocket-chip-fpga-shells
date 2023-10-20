@@ -11,12 +11,7 @@ abstract class ButtonAlteraPlacedOverlay(name: String, di: ButtonDesignInput, si
   def shell: AlteraShell
 
   shell { InModuleBody {
-    val bwire = Wire(Bool())
-    buttonWire := bwire.asUInt
-    val ibuf = Module(new ALT_IOBUF)
-    ibuf.suggestName(s"button_ibuf_${si.number}")
-    ibuf.io.io := io
-    bwire := ibuf.asInput
+    buttonWire := io
 
     val ios = IOPin.of(io)
     (packagePin.toSeq zip ios) foreach { case (pin, io) =>

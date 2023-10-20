@@ -11,12 +11,7 @@ abstract class SwitchAlteraPlacedOverlay(name: String, di: SwitchDesignInput, si
   def shell: AlteraShell
 
   shell { InModuleBody {
-    val bwire = Wire(Bool())
-    switchWire := bwire.asUInt
-    val ibuf = Module(new ALT_IOBUF)
-    ibuf.suggestName(s"switch_ibuf_${si.number}")
-    ibuf.io.io := io
-    bwire := ibuf.asInput
+    switchWire := io
 
     val ios = IOPin.of(io)
     (packagePin.toSeq zip ios) foreach { case (pin, io) =>

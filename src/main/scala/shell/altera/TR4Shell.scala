@@ -12,6 +12,8 @@ import sifive.fpgashells.ip.altera._
 //import sifive.fpgashells.ip.xilinx.vc707mig._
 import sifive.fpgashells.shell._
 
+case object GPIO0OverlayKey extends Field[Seq[DesignPlacer[GPIODirectAlteraDesignInput, GPIOShellInput, GPIODirectAlteraOverlayOutput]]](Nil)
+
 class SysClockTR4PlacedOverlay(val shell: AlteraShell, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)
   extends SingleEndedClockInputAlteraPlacedOverlay(name, designInput, shellInput)
 {
@@ -121,6 +123,30 @@ class GPIOPeripheralTR4ShellPlacer(val shell: TR4Shell, val which: TR4GPIOGroup,
   extends GPIOShellPlacer[TR4Shell] {
 
   def place(designInput: GPIODesignInput) = new GPIOPeripheralTR4PlacedOverlay(shell, which, valName.name, designInput, shellInput)
+}
+
+class GPIO0TR4PlacedOverlay(val shell: TR4Shell, val which: TR4GPIOGroup, name: String, di: GPIODirectAlteraDesignInput, si: GPIOShellInput)
+  extends GPIODirectAlteraPlacedOverlay(name, di, si)
+{
+  shell { InModuleBody {
+    require(io.gpio.length == which.elem.length)
+    val packagePinsWithPackageIOs = io.gpio.zip(which.elem).map {
+      case (io, (i, j)) =>
+        (GPIOTR4PinConstraints.gpio(i)(j), IOPin(io))
+    }
+    println(packagePinsWithPackageIOs)
+
+    packagePinsWithPackageIOs foreach { case (pin, io) => {
+      shell.tdc.addPackagePin(io, pin)
+      shell.tdc.addIOStandard(io, "1.8 V")
+    } }
+  } }
+}
+
+class GPIO0TR4ShellPlacer(val shell: TR4Shell, val which: TR4GPIOGroup, val shellInput: GPIOShellInput)(implicit val valName: ValName)
+  extends GPIODirectAlteraShellPlacer[TR4Shell] {
+
+  def place(designInput: GPIODirectAlteraDesignInput) = new GPIO0TR4PlacedOverlay(shell, which, valName.name, designInput, shellInput)
 }
 
 // SPI Flash
@@ -316,6 +342,8 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
     Overlay(AlteraHSMCOverlayKey, new AlteraHSMCTR4ShellPlacer(this, new TR4HSMCA, AlteraHSMCShellInput("A"))(ValName("HSMC_A"))),
     Overlay(AlteraHSMCOverlayKey, new AlteraHSMCTR4ShellPlacer(this, new TR4HSMCB, AlteraHSMCShellInput("B"))(ValName("HSMC_B")))
   )
+  val gpio0seq  = Seq.tabulate(36)(i => 0 -> i)
+  val gpio0     = Overlay(GPIO0OverlayKey, new GPIO0TR4ShellPlacer(this, TR4GPIOGroup(gpio0seq), GPIOShellInput()))
 
   /*def memEnable: Boolean = true
   val mem_a = memEnable.option(IO(Output(Bits((15 + 1).W))))
