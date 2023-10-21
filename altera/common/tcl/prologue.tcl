@@ -96,14 +96,47 @@ set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR $ERROR_CHECK_FREQUENCY
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION $POWER_PRESET_COOLING_SOLUTION
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL $POWER_BOARD_THERMAL_MODEL
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+#set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name VERILOG_MACRO "INCL_CLK=1"
 set_global_assignment -name VERILOG_MACRO "SYNTHESIS=1"
 set_global_assignment -name VERILOG_MACRO "IMPL_PROCESSOR=1"
 set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
+set_global_assignment -name NUMBER_OF_REMOVED_REGISTERS_REPORTED 10000000
+set_global_assignment -name NUMBER_OF_SWEPT_NODES_REPORTED 10000000
+set_global_assignment -name NUMBER_OF_INVERTED_REGISTERS_REPORTED 10000000
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+
+# Implementation settings
+set_global_assignment -name ALLOW_REGISTER_MERGING OFF
+set_global_assignment -name ALLOW_REGISTER_DUPLICATION OFF
+set_global_assignment -name EXTRACT_VERILOG_STATE_MACHINES OFF
+set_global_assignment -name EXTRACT_VHDL_STATE_MACHINES OFF
+set_global_assignment -name INFER_RAMS_FROM_RAW_LOGIC ON
+set_global_assignment -name PARALLEL_SYNTHESIS OFF
+set_global_assignment -name DSP_BLOCK_BALANCING AUTO
+set_global_assignment -name REMOVE_DUPLICATE_REGISTERS ON
+set_global_assignment -name AUTO_CARRY_CHAINS OFF
+set_global_assignment -name AUTO_OPEN_DRAIN_PINS OFF
+set_global_assignment -name AUTO_ROM_RECOGNITION ON
+set_global_assignment -name AUTO_RAM_RECOGNITION ON
+set_global_assignment -name AUTO_DSP_RECOGNITION ON
+set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION ON
+set_global_assignment -name ALLOW_SHIFT_REGISTER_MERGING_ACROSS_HIERARCHIES OFF
+set_global_assignment -name AUTO_CLOCK_ENABLE_RECOGNITION OFF
+set_global_assignment -name USE_LOGICLOCK_CONSTRAINTS_IN_BALANCING OFF
+set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS OFF
+set_global_assignment -name REPORT_PARAMETER_SETTINGS OFF
+set_global_assignment -name REPORT_SOURCE_ASSIGNMENTS OFF
+set_global_assignment -name REPORT_CONNECTIVITY_CHECKS OFF
+set_global_assignment -name SYNTH_CLOCK_MUX_PROTECTION OFF
+set_global_assignment -name SYNTHESIS_EFFORT FAST
+set_global_assignment -name SHIFT_REGISTER_RECOGNITION_ACLR_SIGNAL OFF
+set_global_assignment -name SYNTH_MESSAGE_LEVEL HIGH
+set_global_assignment -name DISABLE_REGISTER_MERGING_ACROSS_HIERARCHIES OFF
+set_global_assignment -name SYNTH_RESOURCE_AWARE_INFERENCE_FOR_BLOCK_RAM OFF
+set_global_assignment -name AUTO_PARALLEL_SYNTHESIS OFF
 
 # Add verilog files from manifest
 proc load_vsrc_manifest {vsrc_manifest} {
