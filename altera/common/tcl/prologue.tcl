@@ -98,7 +98,9 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL $POWER_BOARD_THERMAL_MODEL
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name VERILOG_MACRO "INCL_CLK=1"
 set_global_assignment -name VERILOG_MACRO "SYNTHESIS=1"
+set_global_assignment -name VERILOG_MACRO "IMPL_PROCESSOR=1"
 set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
