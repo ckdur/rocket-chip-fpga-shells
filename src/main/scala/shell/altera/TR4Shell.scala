@@ -2,22 +2,22 @@ package sifive.fpgashells.shell.altera
 
 import chisel3._
 import chisel3.experimental.{Analog, attach}
+import chisel3.experimental.dataview._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util._
 import org.chipsalliance.cde.config._
 import sifive.fpgashells.clocks._
-//import sifive.fpgashells.devices.xilinx.xilinxvc707mig._
 import sifive.fpgashells.ip.altera._
-//import sifive.fpgashells.ip.xilinx.vc707mig._
+import sifive.fpgashells.devices.altera.altera_mem_if._
+import sifive.fpgashells.ip.altera.altera_mem_if._
 import sifive.fpgashells.shell._
 
 case object GPIO0OverlayKey extends Field[Seq[DesignPlacer[GPIODirectAlteraDesignInput, GPIOShellInput, GPIODirectAlteraOverlayOutput]]](Nil)
 
-class SysClockTR4PlacedOverlay(val shell: AlteraShell, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)
+class SysClockTR4PlacedOverlay(val shell: AlteraShell, val bank: Int, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)
   extends SingleEndedClockInputAlteraPlacedOverlay(name, designInput, shellInput)
 {
-  val bank = 1
   val bank_map = Map(
     1 -> "PIN_AB34",
     3 -> "PIN_AW22",
@@ -25,7 +25,7 @@ class SysClockTR4PlacedOverlay(val shell: AlteraShell, name: String, val designI
     7 -> "PIN_A21",
     8 -> "PIN_B23",
   )
-  def bank_freq(b: Int): Double = 50
+  def bank_freq(b: Int): Double = 50.0
   val node = shell { ClockSourceNode(freqMHz = bank_freq(bank), jitterPS = 50) }
 
   shell { InModuleBody {
@@ -46,9 +46,9 @@ class LEDTR4ShellPlacer(val shell: TR4Shell, val shellInput: LEDShellInput)(impl
   def place(designInput: LEDDesignInput) = new LEDTR4PlacedOverlay(shell, valName.name, designInput, shellInput)
 }
 
-class SysClockTR4ShellPlacer(val shell: AlteraShell, val shellInput: ClockInputShellInput)(implicit val valName: ValName)
+class SysClockTR4ShellPlacer(val shell: AlteraShell, val bank: Int, val shellInput: ClockInputShellInput)(implicit val valName: ValName)
   extends ClockInputShellPlacer[AlteraShell] {
-  def place(designInput: ClockInputDesignInput) = new SysClockTR4PlacedOverlay(shell, valName.name, designInput, shellInput)
+  def place(designInput: ClockInputDesignInput) = new SysClockTR4PlacedOverlay(shell, bank, valName.name, designInput, shellInput)
 }
 
 //SWs
@@ -310,6 +310,164 @@ class TR4HSMCB extends HasAlteraHSMCLocs {
     "PIN_AL8", "PIN_AK9", "PIN_AL10", "PIN_AH11", "PIN_AG12", "PIN_AE13", "PIN_AF13", "PIN_AD13", "PIN_AN7")
 }
 
+// DDR3
+object TR4DDR3Locs {
+  val mem_a = Seq("PIN_N23", "PIN_C22", "PIN_M22", "PIN_D21", "PIN_P24", "PIN_A24", "PIN_M21", "PIN_D17", "PIN_A25",
+    "PIN_N25", "PIN_C24", "PIN_N21", "PIN_M25", "PIN_K26"/*, "PIN_F16", "PIN_R20"*/)
+  val mem_dm = Seq("PIN_G16", "PIN_N16", "PIN_P23", "PIN_B29", "PIN_H28", "PIN_E17", "PIN_C26", "PIN_E23")
+  val mem_dq = Seq("PIN_G15",
+    "PIN_F15", "PIN_C16", "PIN_B16", "PIN_G17", "PIN_A16", "PIN_D16", "PIN_E16", "PIN_N17", "PIN_M17", "PIN_K17",
+    "PIN_L16", "PIN_P16", "PIN_P17", "PIN_J17", "PIN_H17", "PIN_N22", "PIN_M23", "PIN_J25", "PIN_M24", "PIN_R22",
+    "PIN_P22", "PIN_K24", "PIN_J24", "PIN_A27", "PIN_A28", "PIN_C29", "PIN_C30", "PIN_C27", "PIN_D27", "PIN_A31",
+    "PIN_B31", "PIN_G27", "PIN_G29", "PIN_F28", "PIN_F27", "PIN_E28", "PIN_D28", "PIN_H26", "PIN_J26", "PIN_F19",
+    "PIN_G19", "PIN_F20", "PIN_G20", "PIN_C17", "PIN_F17", "PIN_C18", "PIN_D18", "PIN_D25", "PIN_C25", "PIN_G24",
+    "PIN_G25", "PIN_B25", "PIN_A26", "PIN_D26", "PIN_F24", "PIN_F23", "PIN_G23", "PIN_J22", "PIN_H22", "PIN_K22",
+    "PIN_D22", "PIN_G22", "PIN_E22")
+  val mem_dqs = Seq("PIN_D15", "PIN_K16", "PIN_L23", "PIN_C28", "PIN_E29", "PIN_G18", "PIN_F25", "PIN_J23")
+  val mem_dqs_n = Seq("PIN_C15", "PIN_J16", "PIN_K23", "PIN_B28", "PIN_D29", "PIN_F18", "PIN_E25", "PIN_H23")
+  val mem_ba = Seq("PIN_B26", "PIN_A29", "PIN_R24")
+  val mem_cke = Seq("PIN_P25", "PIN_M16")
+  val mem_ck = Seq("PIN_K27", "PIN_L25")
+  val mem_ck_n = Seq("PIN_J27", "PIN_K28")
+  val mem_cs_n = Seq("PIN_D23", "PIN_G28")
+  val mem_odt = Seq("PIN_F26", "PIN_G26")
+  val mem_cas_n = "PIN_L26"
+  val mem_event_n = "PIN_R18"
+  val mem_ras_n = "PIN_D24"
+  val mem_reset_n = "PIN_J18"
+  val mem_scl = "PIN_H19"
+  val mem_sda = "PIN_P18"
+  val mem_we_n = "PIN_M27"
+  val mem_oct_rdn = "PIN_N26"
+  val mem_oct_rup = "PIN_P26"
+}
+
+class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DDRDesignInput, val shellInput: DDRShellInput)
+  extends DDRPlacedOverlay[AlteraMemIfIODDR3](name, designInput, shellInput)
+{
+  val ddrParams = AlteraMemIfDDR3Config()
+  val memifParams = AlteraMemIfParams(address = AddressSet.misaligned(di.baseAddress, 0x10000000))
+  val memif     = LazyModule(new AlteraMemIf(c = memifParams, ddrc = ddrParams))
+  val ddrUI     = shell { ClockSourceNode(freqMHz = 150) }
+  val areset    = shell { ClockSinkNode(Seq(ClockSinkParameters())) }
+  areset := designInput.wrangler := ddrUI
+
+  def overlayOutput = DDROverlayOutput(ddr = memif.node)
+  def ioFactory = new AlteraMemIfIODDR3(ddrParams)
+
+  shell { InModuleBody {
+    require (shell.ddr_clock.get.isDefined, "Use of DDRTR4PlacedOverlay depends on SysClockTR4PlacedOverlay")
+    val (sys, _) = shell.ddr_clock.get.get.overlayOutput.node.out(0)
+    val (ui, _) = ddrUI.out(0)
+    val (ar, _) = areset.in(0)
+    val port = memif.module.io.port
+    io <> port.viewAsSupertype(new AlteraMemIfIODDR3(ddrParams))
+    ui.clock := port.mem_afi_clk_clk
+    ui.reset := !port.mem_afi_reset_reset_n  // TODO: Get the locked also?
+    port.mem_pll_ref_clk_clk := sys.clock
+    port.mem_soft_reset_reset := sys.reset // pllReset
+    port.mem_global_reset_reset_n := !ar.reset
+
+    TR4DDR3Locs.mem_a.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_a, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_a, i), "SSTL-15 CLASS I")
+      shell.tdc.addDriveStrength(IOPin(io.memory_mem_a, i), "MAXIMUM CURRENT")
+    }
+    TR4DDR3Locs.mem_dm.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_dm, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_dm, i), "SSTL-15 CLASS I")
+      shell.tdc.addTermination(IOPin(io.memory_mem_dm, i), "50 OHM WITH CALIBRATION")
+      shell.tdc.addGroup(
+        IOPin(io.memory_mem_dm, i),
+        IOPin(io.memory_mem_dq, i),
+        "9"
+      )
+      shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dm, i))
+    }
+    TR4DDR3Locs.mem_dq.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_dq, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_dq, i), "SSTL-15 CLASS I")
+      shell.tdc.addTermination(IOPin(io.memory_mem_dq, i), "50 OHM WITH CALIBRATION")
+      shell.tdc.addGroup(
+        IOPin(io.memory_mem_dqs, i / 8),
+        IOPin(io.memory_mem_dq, i),
+        "9"
+      )
+      shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dq, i))
+    }
+    TR4DDR3Locs.mem_dqs.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_dqs, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_dqs, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
+      shell.tdc.addTermination(IOPin(io.memory_mem_dqs, i), "50 OHM WITH CALIBRATION")
+      shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dqs, i))
+    }
+    TR4DDR3Locs.mem_dqs_n.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_dqs_n, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_dqs_n, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
+      shell.tdc.addTermination(IOPin(io.memory_mem_dqs_n, i), "50 OHM WITH CALIBRATION")
+      shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dqs_n, i))
+    }
+    TR4DDR3Locs.mem_ba.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_ba, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_ba, i), "SSTL-15 CLASS I")
+      shell.tdc.addDriveStrength(IOPin(io.memory_mem_ba, i), "MAXIMUM CURRENT")
+    }
+    TR4DDR3Locs.mem_cke.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_cke, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_cke, i), "SSTL-15 CLASS I")
+      shell.tdc.addDriveStrength(IOPin(io.memory_mem_cke, i), "MAXIMUM CURRENT")
+    }
+    TR4DDR3Locs.mem_ck.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_ck, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_ck, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
+      shell.tdc.addTermination(IOPin(io.memory_mem_ck, i), "50 OHM WITH CALIBRATION")
+    }
+    TR4DDR3Locs.mem_ck_n.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_ck_n, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_ck_n, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
+      shell.tdc.addTermination(IOPin(io.memory_mem_ck_n, i), "50 OHM WITH CALIBRATION")
+    }
+    TR4DDR3Locs.mem_cs_n.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_cs_n, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_cs_n, i), "SSTL-15 CLASS I")
+      shell.tdc.addDriveStrength(IOPin(io.memory_mem_cs_n, i), "MAXIMUM CURRENT")
+    }
+    TR4DDR3Locs.mem_odt.zipWithIndex.foreach { case (pin, i) =>
+      shell.tdc.addPackagePin(IOPin(io.memory_mem_odt, i), pin)
+      shell.tdc.addIOStandard(IOPin(io.memory_mem_odt, i), "SSTL-15 CLASS I")
+      shell.tdc.addDriveStrength(IOPin(io.memory_mem_odt, i), "MAXIMUM CURRENT")
+    }
+    io.oct.rdn.foreach { rdn =>
+      shell.tdc.addPackagePin(IOPin(rdn), TR4DDR3Locs.mem_oct_rdn)
+      shell.tdc.addIOStandard(IOPin(rdn), "1.5V")
+    }
+    io.oct.rup.foreach { rup =>
+      shell.tdc.addPackagePin(IOPin(rup), TR4DDR3Locs.mem_oct_rup)
+      shell.tdc.addIOStandard(IOPin(rup), "1.5V")
+    }
+    shell.tdc.addPackagePin(IOPin(io.memory_mem_cas_n), TR4DDR3Locs.mem_cas_n)
+    shell.tdc.addIOStandard(IOPin(io.memory_mem_cas_n), "SSTL-15 CLASS I")
+    shell.tdc.addDriveStrength(IOPin(io.memory_mem_cas_n), "MAXIMUM CURRENT")
+    shell.tdc.addPackagePin(IOPin(io.memory_mem_ras_n), TR4DDR3Locs.mem_ras_n)
+    shell.tdc.addIOStandard(IOPin(io.memory_mem_ras_n), "SSTL-15 CLASS I")
+    shell.tdc.addDriveStrength(IOPin(io.memory_mem_ras_n), "MAXIMUM CURRENT")
+    io.memory_mem_reset_n.foreach { reset_n =>
+      shell.tdc.addPackagePin(IOPin(reset_n), TR4DDR3Locs.mem_reset_n)
+      shell.tdc.addIOStandard(IOPin(reset_n), "1.5V")
+    }
+    shell.tdc.addPackagePin(IOPin(io.memory_mem_we_n), TR4DDR3Locs.mem_we_n)
+    shell.tdc.addIOStandard(IOPin(io.memory_mem_we_n), "SSTL-15 CLASS I")
+    shell.tdc.addDriveStrength(IOPin(io.memory_mem_we_n), "MAXIMUM CURRENT")
+  } }
+
+  //shell.sdc.addGroup(clocks = Seq("clk_pll_i"))
+}
+
+class DDRTR4ShellPlacer(val shell: TR4Shell, val shellInput: DDRShellInput)(implicit val valName: ValName)
+  extends DDRShellPlacer[TR4Shell] {
+  def place(designInput: DDRDesignInput) = new DDRTR4PlacedOverlay(shell, valName.name, designInput, shellInput)
+}
+
 abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
 {
   val pllFactory = new PLLFactory(this, 10, p => Module(new QsysALTPLL(PLLCalcParameters(p))))
@@ -321,7 +479,8 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
   val resetPin = InModuleBody { Wire(Bool()) }
   val topDesign = LazyModule(p(DesignKey)(designParameters))
 
-  val sys_clock = Overlay(ClockInputOverlayKey, new SysClockTR4ShellPlacer(this, ClockInputShellInput()))
+  val sys_clock = Overlay(ClockInputOverlayKey, new SysClockTR4ShellPlacer(this, 1, ClockInputShellInput()))
+  val ddr_clock = Overlay(ClockInputOverlayKey, new SysClockTR4ShellPlacer(this, 3, ClockInputShellInput()))
   val led       = Seq.tabulate(4)(i => Overlay(LEDOverlayKey, new LEDTR4ShellPlacer(this, LEDShellInput(color = "green", number = i))(valName = ValName(s"led_$i"))))
   val switch    = Seq.tabulate(4)(i => Overlay(SwitchOverlayKey, new SwitchTR4ShellPlacer(this, SwitchShellInput(number = i))(valName = ValName(s"switch_$i"))))
   val button    = Seq.tabulate(3)(i => Overlay(ButtonOverlayKey, new ButtonTR4ShellPlacer(this, ButtonShellInput(number = i))(valName = ValName(s"button_$i"))))
@@ -344,25 +503,7 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
   )
   val gpio0seq  = Seq.tabulate(36)(i => 0 -> i)
   val gpio0     = Overlay(GPIO0OverlayKey, new GPIO0TR4ShellPlacer(this, TR4GPIOGroup(gpio0seq), GPIOShellInput()))
-
-  /*def memEnable: Boolean = true
-  val mem_a = memEnable.option(IO(Output(Bits((15 + 1).W))))
-  val mem_ba = memEnable.option(IO(Output(Bits((2 + 1).W))))
-  val mem_cas_n = memEnable.option(IO(Output(Bool())))
-  val mem_cke = memEnable.option(IO(Output(Bits((1 + 1).W))))
-  val mem_ck = memEnable.option(IO(Output(Bits((0 + 1).W)))) // NOTE: Is impossible to do [0:0]
-  val mem_ck_n = memEnable.option(IO(Output(Bits((0 + 1).W)))) // NOTE: Is impossible to do [0:0]
-  val mem_cs_n = memEnable.option(IO(Output(Bits((1 + 1).W))))
-  val mem_dm = memEnable.option(IO(Output(Bits((7 + 1).W))))
-  val mem_dq = memEnable.option(IO(Analog((63 + 1).W)))
-  val mem_dqs = memEnable.option(IO(Analog((7 + 1).W)))
-  val mem_dqs_n = memEnable.option(IO(Analog((7 + 1).W)))
-  val mem_odt = memEnable.option(IO(Output(Bits((1 + 1).W))))
-  val mem_ras_n = memEnable.option(IO(Output(Bool())))
-  val mem_reset_n = memEnable.option(IO(Output(Bool())))
-  val mem_we_n = memEnable.option(IO(Output(Bool())))
-  val mem_oct_rdn = memEnable.option(IO(Input(Bool())))
-  val mem_oct_rup = memEnable.option(IO(Input(Bool())))*/
+  val ddr       = Overlay(DDROverlayKey, new DDRTR4ShellPlacer(this, DDRShellInput()))
 
   // Place the sys_clock at the Shell if the user didn't ask for it
   p(ClockInputOverlayKey).foreach(_.place(ClockInputDesignInput()))
@@ -382,20 +523,6 @@ class TR4ShellImpl(outer: TR4Shell) extends LazyRawModuleImp(outer) {
   attach(reset_ibuf.io.io, reset)
   outer.resetPin := ~reset_ibuf.asInput()
   outer.pllReset := outer.resetPin
-
-  /*val HSMA = IO(new AlteraHSMC)
-  val HSMB = IO(new AlteraHSMC)
-  val GPIO0_D = IO(Vec(35 + 1, Analog(1.W)))
-  val GPIO1_D = IO(Vec(35 + 1, Analog(1.W)))
-  val HSMD = IO(new AlteraHSMC(on1 = false))
-  val HSME = IO(new AlteraHSMC(on1 = false))
-  val HSMF = IO(new AlteraHSMC(on1 = false, on2 = false))
-
-  HSMA := DontCare
-  HSMB := DontCare
-  HSMD := DontCare
-  HSME := DontCare
-  HSMF := DontCare*/
 }
 
 

@@ -14,23 +14,25 @@ class AlteraShellTcl(val name: String)
   protected def addConstraint(command: => String) { constraints = (() => command) +: constraints }
   ElaborationArtefacts.add(name, constraints.map(_()).reverse.mkString("\n") + "\n")
 
-  def addBoardPin(io: IOPin, pin: String) {} // TODO: Unimplemented
   def addPackagePin(io: IOPin, pin: String) {
     addConstraint(s"set_location_assignment ${pin} -to ${io.name}")
   }
   def addIOStandard(io: IOPin, standard: String) {
     addConstraint(s"set_instance_assignment -name IO_STANDARD \"${standard}\" -to ${io.name}")
   }
-  def addPullup(io: IOPin) {} // TODO: Unimplemented
-  def addIOB(io: IOPin) {} // TODO: Unimplemented
-  def addSlew(io: IOPin, speed: String) {} // TODO: Unimplemented
   def addTermination(io: IOPin, kind: String) {
     if(io.isInput) addConstraint(s"set_instance_assignment -name INPUT_TERMINATION \"SERIES ${kind}\" -to ${io.name}")
     if(io.isOutput) addConstraint(s"set_instance_assignment -name OUTPUT_TERMINATION \"PARALELL ${kind}\" -to ${io.name}")
   }
-  def clockDedicatedRouteFalse(io: IOPin) {} // TODO: Unimplemented
-  def addDriveStrength(io: IOPin, drive: String) {} // TODO: Unimplemented
-  def addIbufLowPower(io: IOPin, value: String) {} // TODO: Unimplemented
+  def addDriveStrength(io: IOPin, drive: String): Unit = {
+    addConstraint(s"set_instance_assignment -name CURRENT_STRENGTH_NEW \"${drive}\" -to ${io.name}")
+  }
+  def addGroup(from: IOPin, to: IOPin, group: String): Unit = {
+    addConstraint(s"set_instance_assignment -name DQ_GROUP ${group} -from ${from.name} -to ${to.name}")
+  }
+  def addInterfaceDelay(io: IOPin, value: String = "FLEXIBLE_TIMING"): Unit = {
+    addConstraint(s"set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG ${value} -to ${io.name}")
+  }
 }
 
 class AlteraSDC(name: String) extends SDC(name) {
