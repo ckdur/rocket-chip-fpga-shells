@@ -378,8 +378,8 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
       shell.tdc.addIOStandard(IOPin(io.memory_mem_dm, i), "SSTL-15 CLASS I")
       shell.tdc.addTermination(IOPin(io.memory_mem_dm, i), "50 OHM WITH CALIBRATION")
       shell.tdc.addGroup(
+        IOPin(io.memory_mem_dqs, i),
         IOPin(io.memory_mem_dm, i),
-        IOPin(io.memory_mem_dq, i),
         "9"
       )
       shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dm, i))
@@ -420,12 +420,12 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     TR4DDR3Locs.mem_ck.zipWithIndex.foreach { case (pin, i) =>
       shell.tdc.addPackagePin(IOPin(io.memory_mem_ck, i), pin)
       shell.tdc.addIOStandard(IOPin(io.memory_mem_ck, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
-      shell.tdc.addTermination(IOPin(io.memory_mem_ck, i), "50 OHM WITH CALIBRATION")
+      shell.tdc.addTermination(IOPin(io.memory_mem_ck, i), "50 OHM WITHOUT CALIBRATION")
     }
     TR4DDR3Locs.mem_ck_n.zipWithIndex.foreach { case (pin, i) =>
       shell.tdc.addPackagePin(IOPin(io.memory_mem_ck_n, i), pin)
       shell.tdc.addIOStandard(IOPin(io.memory_mem_ck_n, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
-      shell.tdc.addTermination(IOPin(io.memory_mem_ck_n, i), "50 OHM WITH CALIBRATION")
+      shell.tdc.addTermination(IOPin(io.memory_mem_ck_n, i), "50 OHM WITHOUT CALIBRATION")
     }
     TR4DDR3Locs.mem_cs_n.zipWithIndex.foreach { case (pin, i) =>
       shell.tdc.addPackagePin(IOPin(io.memory_mem_cs_n, i), pin)
