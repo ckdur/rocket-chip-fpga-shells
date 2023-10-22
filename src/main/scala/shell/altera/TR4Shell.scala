@@ -368,7 +368,7 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     ui.reset := !port.mem_afi_reset_reset_n  // TODO: Get the locked also?
     port.mem_pll_ref_clk_clk := sys.clock
     port.mem_global_reset_reset_n := !sys.reset // pllReset
-    port.mem_soft_reset_reset := ar.reset
+    port.mem_soft_reset_reset := sys.reset
 
     getStatus.mem_status_local_init_done := port.mem_status_local_init_done
     getStatus.mem_status_local_cal_success := port.mem_status_local_cal_success
