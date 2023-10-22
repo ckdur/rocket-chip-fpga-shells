@@ -355,6 +355,8 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
   def overlayOutput = DDROverlayOutput(ddr = memif.node)
   def ioFactory = new AlteraMemIfIODDR3(ddrParams)
 
+  val getStatus = shell { InModuleBody { Wire(new Bundle with AlteraMemIfDDR3User) } }
+
   shell { InModuleBody {
     require (shell.ddr_clock.get.isDefined, "Use of DDRTR4PlacedOverlay depends on SysClockTR4PlacedOverlay")
     val (sys, _) = shell.ddr_clock.get.get.overlayOutput.node.out(0)
@@ -365,8 +367,12 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     ui.clock := port.mem_afi_clk_clk
     ui.reset := !port.mem_afi_reset_reset_n  // TODO: Get the locked also?
     port.mem_pll_ref_clk_clk := sys.clock
-    port.mem_soft_reset_reset := sys.reset // pllReset
-    port.mem_global_reset_reset_n := !ar.reset
+    port.mem_global_reset_reset_n := !sys.reset // pllReset
+    port.mem_soft_reset_reset := ar.reset
+
+    getStatus.mem_status_local_init_done := port.mem_status_local_init_done
+    getStatus.mem_status_local_cal_success := port.mem_status_local_cal_success
+    getStatus.mem_status_local_cal_fail := port.mem_status_local_cal_fail
 
     TR4DDR3Locs.mem_a.zipWithIndex.foreach { case (pin, i) =>
       shell.tdc.addPackagePin(IOPin(io.memory_mem_a, i), pin)
