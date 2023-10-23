@@ -13,12 +13,25 @@ abstract class SPIAlteraPlacedOverlay(name: String, di: SPIDesignInput, si: SPIS
   def shell: AlteraShell
 
   shell { InModuleBody {
-    UIntToAnalog(tlspiSink.bundle.sck, io.spi_clk, true.B)
-    UIntToAnalog(tlspiSink.bundle.cs(0), io.spi_cs, true.B)
+    val sck = ALT_IOBUF.apply.suggestName(s"${name}_clk_buf")
+    attach(io.spi_clk, sck.io.io)
+    sck.io.i := tlspiSink.bundle.sck
+    sck.io.oe := true.B
+    // UIntToAnalog(tlspiSink.bundle.sck, io.spi_clk, true.B)
+    val cs0 = ALT_IOBUF.apply.suggestName(s"${name}_cs0_buf")
+    attach(io.spi_cs, cs0.io.io)
+    cs0.io.i := tlspiSink.bundle.cs(0)
+    cs0.io.oe := true.B
+    // UIntToAnalog(tlspiSink.bundle.cs(0), io.spi_cs, true.B)
 
-    tlspiSink.bundle.dq.zip(io.spi_dat).foreach { case (design_dq, io_dq) =>
-      UIntToAnalog(design_dq.o, io_dq, design_dq.oe)
-      design_dq.i := AnalogToUInt(io_dq)
+    tlspiSink.bundle.dq.zip(io.spi_dat).zipWithIndex.foreach { case ((design_dq, io_dq), i) =>
+      val dat = Module(new ALT_IOBUF).suggestName(s"${name}_dat_${i}_buf")
+      dat.io.i := design_dq.o
+      dat.io.oe := design_dq.oe
+      design_dq.i := dat.io.o
+      attach(io_dq, dat.io.io)
+      // UIntToAnalog(design_dq.o, io_dq, design_dq.oe)
+      // design_dq.i := AnalogToUInt(io_dq)
     }
 
     /*val sck = Module(new ALT_IOBUF).suggestName(s"${name}_sck_buf")

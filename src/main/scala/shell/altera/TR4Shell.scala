@@ -346,7 +346,7 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
   extends DDRPlacedOverlay[AlteraMemIfIODDR3](name, designInput, shellInput)
 {
   val ddrParams = AlteraMemIfDDR3Config()
-  val memifParams = AlteraMemIfParams(address = AddressSet.misaligned(di.baseAddress, 0x10000000))
+  val memifParams = AlteraMemIfParams(address = AddressSet.misaligned(di.baseAddress, 0x40000000)) // Always 1GB
   val memif     = LazyModule(new AlteraMemIf(c = memifParams, ddrc = ddrParams))
   val ddrUI     = shell { ClockSourceNode(freqMHz = 150) }
   val areset    = shell { ClockSinkNode(Seq(ClockSinkParameters())) }

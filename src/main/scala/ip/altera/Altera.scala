@@ -52,10 +52,17 @@ object ALT_IOBUF {
     m.asInput()
   }
 
-  def apply(analog: Analog, i: Bool) : Unit = {
+  def apply(i: Bool, analog: Analog) : Unit = {
     val m = Module(new ALT_IOBUF)
     m.attachTo(analog)
     m.asOutput(i)
+  }
+
+  def apply(i: Bool, analog: Analog, oe: Bool): Unit = {
+    val m = Module(new ALT_IOBUF)
+    m.attachTo(analog)
+    m.asOutput(i)
+    m.io.oe := oe
   }
 
   def apply(analog: Analog, e: BasePin) : Unit = {
