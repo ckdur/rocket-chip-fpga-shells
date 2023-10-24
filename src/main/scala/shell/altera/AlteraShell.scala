@@ -20,6 +20,9 @@ class AlteraShellTcl(val name: String)
   def addIOStandard(io: IOPin, standard: String) {
     addConstraint(s"set_instance_assignment -name IO_STANDARD \"${standard}\" -to ${io.name}")
   }
+  def addPullup(io: IOPin) {
+    addConstraint(s"set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to ${io.name}")
+  }
   def addTermination(io: IOPin, kind: String) {
     if(io.isInput) addConstraint(s"set_instance_assignment -name INPUT_TERMINATION \"PARALLEL ${kind}\" -to ${io.name}")
     if(io.isOutput) addConstraint(s"set_instance_assignment -name OUTPUT_TERMINATION \"SERIES ${kind}\" -to ${io.name}")

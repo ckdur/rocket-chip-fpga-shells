@@ -35,15 +35,15 @@ abstract class GPIODirectAlteraPlacedOverlay(val name: String, val designInput: 
 
   def ioFactory = new ShellGPIOPortIO(designInput.width)
 
-  val gpio = shell { InModuleBody { Wire(Vec(designInput.width, Analog(1.W))) } }
+  val gpio = shell { InModuleBody { io.gpio /*Wire(Vec(designInput.width, Analog(1.W)))*/ } }
 
   def overlayOutput = GPIODirectAlteraOverlayOutput(gpio)
 
   def shell: AlteraShell
 
-  shell { InModuleBody {
+  /*shell { InModuleBody {
     gpio.zipWithIndex.foreach{ case (pin, idx) =>
       attach(pin, io.gpio(idx))
     }
-  } }
+  } }*/
 }

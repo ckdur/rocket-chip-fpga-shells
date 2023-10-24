@@ -170,6 +170,9 @@ class SPIFlashTR4PlacedOverlay(val shell: TR4Shell, val which: TR4GPIOGroup, nam
       shell.tdc.addPackagePin(io, pin)
       shell.tdc.addIOStandard(io, "1.8 V")
     }
+    packagePinsWithPackageIOs drop 1 foreach { case (pin, io) => {
+      shell.tdc.addPullup(io)
+    } }
   } }
 }
 
@@ -200,6 +203,9 @@ class SPITR4PlacedOverlay(val shell: TR4Shell, val which: TR4GPIOGroup, name: St
       shell.tdc.addPackagePin(io, pin)
       shell.tdc.addIOStandard(io, "1.8 V")
     }
+    packagePinsWithPackageIOs drop 1 foreach { case (pin, io) => {
+      shell.tdc.addPullup(io)
+    } }
   } }
 }
 
@@ -229,6 +235,7 @@ class JTAGDebugTR4PlacedOverlay(val shell: TR4Shell, val which: TR4GPIOGroup, na
     packagePinsWithPackageIOs foreach { case (pin, io) =>
       shell.tdc.addPackagePin(io, pin)
       shell.tdc.addIOStandard(io, "1.8 V")
+      shell.tdc.addPullup(io)
     }
   } }
 }

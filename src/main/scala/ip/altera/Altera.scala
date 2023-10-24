@@ -279,3 +279,49 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
        |
        |""".stripMargin)
 }
+
+//-------------------------------------------------------------------------
+// PowerOnResetFPGAOnly
+//-------------------------------------------------------------------------
+/** PowerOnResetFPGAOnly -- this generates a power_on_reset signal using
+ * initial blocks.  It is synthesizable on FPGA flows only.
+ */
+
+// This is a FPGA-Only construct, which uses
+// 'initial' constructions
+class PowerOnResetAlteraFPGAOnly extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val aresetn = Input(Bool())
+    val clock = Input(Clock())
+    val power_on_reset = Output(Bool())
+  })
+
+  setInline(s"PowerOnResetAlteraFPGAOnly.v",
+    s"""(* keep_hierarchy = "yes" *)
+       |module PowerOnResetAlteraFPGAOnly(
+       |  input wire aresetn,
+       |  input wire clock,
+       |  output wire power_on_reset
+       |);
+       |  (* dont_touch = "true" *) reg por = 1'b0;
+       |  initial begin
+       |    por <= 1'b0;
+       |  end
+       |  always @(posedge clock) begin
+       |    por <= aresetn;
+       |  end
+       |  assign power_on_reset = !por;
+       |endmodule
+       |""".stripMargin)
+}
+
+object PowerOnResetAlteraFPGAOnly {
+  def apply (clk: Clock, name: String, areset: Bool): Bool = {
+    val por = Module(new PowerOnResetAlteraFPGAOnly())
+    por.suggestName(name)
+    por.io.aresetn := ~areset
+    por.io.clock := clk
+    por.io.power_on_reset
+  }
+  def apply (clk: Clock, areset: Bool): Bool = apply(clk, "fpga_power_on", areset)
+}
