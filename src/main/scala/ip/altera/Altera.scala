@@ -166,9 +166,10 @@ class PLLCalcParameters(name: String, input: PLLInClockParameters, req: Seq[PLLO
   extends PLLParameters(name, input, req) {
   println(s"PLL Calculation Parameters")
   val inputfreq = input.freqMHz
+  println(s"  Input Freq: ${inputfreq}")
   val outputfreqs = req.map(_.freqMHz)
   println(s"  Output Freqs: ${outputfreqs.map(_.toString).mkString(", ")}")
-  val ratios = outputfreqs.map { ofreq => RationalApprox.toRational(inputfreq / ofreq) }
+  val ratios = outputfreqs.map { ofreq => RationalApprox.toRational(ofreq / inputfreq) }
   println(s"  Ratios: ${ratios.map(_.toString).mkString(", ")}")
   val mults = ratios.map(_.num)
   val divs = ratios.map(_.den)
