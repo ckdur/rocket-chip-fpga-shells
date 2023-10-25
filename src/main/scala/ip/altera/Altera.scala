@@ -217,7 +217,7 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
   def getReset = Some(io.areset)
   def getLocked = io.locked
   def getClockNames = Seq.tabulate(c.req.size) { i => // TODO: Implement this ok
-    s"${c.name}/altpll_0/c${i}"
+    s"${c.name}|altpll_0|sd1|pll7|clk[${i}]"
   }
   def tieoffextra = {
     io.read := false.B
@@ -235,8 +235,8 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
   val outputs = c.req.zipWithIndex.map { case (r, i) =>
     s"""set_instance_parameter_value altpll_0 {CLK${i}_DUTY_CYCLE} {${r.dutyCycle.toInt}}
        |set_instance_parameter_value altpll_0 {CLK${i}_PHASE_SHIFT} {${r.phaseDeg.toInt}}
-       |#set_instance_parameter_value altpll_0 {CLK${i}_MULTIPLY_BY} {${c.mults(i)}}
-       |#set_instance_parameter_value altpll_0 {CLK${i}_DIVIDE_BY} {${c.divs(i)}}
+       |set_instance_parameter_value altpll_0 {CLK${i}_MULTIPLY_BY} {${c.mults(i)}}
+       |set_instance_parameter_value altpll_0 {CLK${i}_DIVIDE_BY} {${c.divs(i)}}
        |""".stripMargin
   }.mkString
 

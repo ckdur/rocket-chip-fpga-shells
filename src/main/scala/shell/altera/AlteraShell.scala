@@ -48,6 +48,10 @@ class AlteraSDC(name: String) extends SDC(name) {
   override def addGroup(clocks: => Seq[String] = Nil, pins: => Seq[IOPin] = Nil): Unit = {
     // Unimplemented
   }
+
+  def addGeneratedClock(name: => String, pinin: => IOPin, opath: String, ratio: Rational, phaseDeg: => Double = 0.0): Unit = {
+    addRawClock(s"create_generated_clock -add -name \"${name}\" -source ${pinin.sdcPin} -multiply_by ${ratio.num} -divide_by ${ratio.den} -phase ${phaseDeg} [get_ports ${opath}]")
+  }
 }
 
 abstract class AlteraShell()(implicit p: Parameters) extends IOShell
