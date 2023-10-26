@@ -221,7 +221,7 @@ class JTAGDebugTR4PlacedOverlay(val shell: TR4Shell, val which: TR4GPIOGroup, na
 {
   shell { InModuleBody {
     shell.sdc.addClock("JTCK", IOPin(io.jtag_TCK), 10)
-    shell.sdc.addGroup(clocks = Seq("JTCK"))
+    shell.sdc.addGroupOnlyNames(clocks = Seq("JTCK"))
     val iopins = Seq(IOPin(io.jtag_TDI),
       IOPin(io.jtag_TDO),
       IOPin(io.jtag_TCK),
@@ -473,7 +473,8 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     shell.tdc.addDriveStrength(IOPin(io.memory_mem_we_n), "MAXIMUM CURRENT")
   } }
 
-  //shell.sdc.addGroup(clocks = Seq("clk_pll_i"))
+  // TODO: Highly cursed
+  shell.sdc.addGroupOnlyNames(clocks = Seq("-of_objects [get_pins memif|island|blackbox|mem|pll0|pll_afi_clk]"))
 }
 
 class DDRTR4ShellPlacer(val shell: TR4Shell, val shellInput: DDRShellInput)(implicit val valName: ValName)

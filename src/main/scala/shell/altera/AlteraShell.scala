@@ -50,7 +50,22 @@ class AlteraSDC(name: String) extends SDC(name) {
   }
 
   def addGeneratedClock(name: => String, pinin: => IOPin, opath: String, ratio: Rational, phaseDeg: => Double = 0.0): Unit = {
-    addRawClock(s"create_generated_clock -add -name \"${name}\" -source ${pinin.sdcPin} -multiply_by ${ratio.num} -divide_by ${ratio.den} -phase ${phaseDeg} [get_ports ${opath}]")
+    // TODO: This can be addDerivedClock() but if supported by multiply
+    addRawClock(s"create_generated_clock -add -name \"${name}\" -source ${pinin.sdcPin} -multiply_by ${ratio.num} -divide_by ${ratio.den} -phase ${phaseDeg} ${opath}")
+  }
+
+  def addGroupOnlyNames(clocks: => Seq[String] = Nil, pins: => Seq[IOPin] = Nil) {
+    def thunk = {
+      val clocksList = clocks
+      val (pinsList, portsList) = pins.map(_.name.replace('/', '|')).partition(_.contains("|"))
+      val sep = " \\\n      "
+      val clocksStr = (" [get_clocks " +: clocksList).mkString(sep) + " \\\n    ]"
+      val pinsStr   = (" [get_clocks -of_objects [get_pins {"  +: pinsList ).mkString(sep) + " \\\n    }]]"
+      val portsStr  = (" [get_clocks -of_objects [get_ports {" +: portsList).mkString(sep) + " \\\n    }]]"
+      val str = s"  -group [list${if (clocksList.isEmpty) "" else clocksStr}${if (pinsList.isEmpty) "" else pinsStr}${if (portsList.isEmpty) "" else portsStr}]"
+      if (clocksList.isEmpty && pinsList.isEmpty && portsList.isEmpty) "" else str
+    }
+    addRawGroup(thunk)
   }
 }
 
