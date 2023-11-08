@@ -473,8 +473,15 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     shell.tdc.addDriveStrength(IOPin(io.memory_mem_we_n), "MAXIMUM CURRENT")
   } }
 
-  // TODO: Highly cursed
-  shell.sdc.addGroupOnlyNames(clocks = Seq("-of_objects [get_pins memif|island|blackbox|mem|pll0|pll_afi_clk]"))
+  // TODO: Highly cursed. The qip will create this clock, and there is no known way to retrieve it
+  // NOTE: If there is a way to retrieve the .sdc from this IP, maybe there is a possibility
+
+  shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_afi_clk"))
+  //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_mem_clk"))
+  //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_write_clk"))
+  //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_addr_cmd_clk"))
+  //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_avl_clk"))
+  //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_config_clk"))
 }
 
 class DDRTR4ShellPlacer(val shell: TR4Shell, val shellInput: DDRShellInput)(implicit val valName: ValName)
