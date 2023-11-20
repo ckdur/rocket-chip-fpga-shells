@@ -507,10 +507,7 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
   val button    = Seq.tabulate(3)(i => Overlay(ButtonOverlayKey, new ButtonTR4ShellPlacer(this, ButtonShellInput(number = i))(valName = ValName(s"button_$i"))))
   val uartseq   = Seq(1 -> 22, 1 -> 23)
   val uart      = Overlay(UARTOverlayKey, new UARTTR4ShellPlacer(this, TR4GPIOGroup(uartseq), UARTShellInput()))
-  val spiseq    = Seq(
-    Seq(1 ->  6, 1 ->  7, 1 ->  4, 1 ->  5, 1 -> 30, 1 -> 31),
-    Seq(1 -> 14, 1 -> 15, 1 -> 12, 1 -> 13, 1 -> 32, 1 -> 33),
-    Seq(1 -> 10, 1 -> 11, 1 ->  8, 1 ->  9, 1 -> 34, 1 -> 35))
+  val spiseq    = Seq( Seq(1 ->  6, 1 ->  7, 1 ->  4, 1 ->  5, 1 -> 30, 1 -> 31))
   val spi       = spiseq.zipWithIndex.map{case (s, i) => Overlay(SPIOverlayKey, new SPITR4ShellPlacer(this, TR4GPIOGroup(s), SPIShellInput(i))(ValName(s"spi_${i}")))}
   val jtagseq   = Seq(1 ->  0, 1 ->  1, 1 ->  2, 1 ->  3)
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugTR4ShellPlacer(this, TR4GPIOGroup(jtagseq), JTAGDebugShellInput()))
