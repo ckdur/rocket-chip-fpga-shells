@@ -225,7 +225,8 @@ class JTAGDebugTR4PlacedOverlay(val shell: TR4Shell, val which: TR4GPIOGroup, na
     val iopins = Seq(IOPin(io.jtag_TDI),
       IOPin(io.jtag_TDO),
       IOPin(io.jtag_TCK),
-      IOPin(io.jtag_TMS))
+      IOPin(io.jtag_TMS),
+      IOPin(io.srst_n))
     val packagePinsWithPackageIOs = iopins.zip(which.elem).map {
       case (io, (i, j)) =>
         (GPIOTR4PinConstraints.gpio(i)(j), io)
@@ -498,6 +499,7 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
 
   val pllReset = InModuleBody { Wire(Bool()) }
   val resetPin = InModuleBody { Wire(Bool()) }
+  val ndreset = InModuleBody { WireInit(false.B) }
   val topDesign = LazyModule(p(DesignKey)(designParameters))
 
   val sys_clock = Overlay(ClockInputOverlayKey, new SysClockTR4ShellPlacer(this, 1, ClockInputShellInput()))
@@ -509,7 +511,7 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
   val uart      = Overlay(UARTOverlayKey, new UARTTR4ShellPlacer(this, TR4GPIOGroup(uartseq), UARTShellInput()))
   val spiseq    = Seq( Seq(1 ->  6, 1 ->  7, 1 ->  4, 1 ->  5))
   val spi       = spiseq.zipWithIndex.map{case (s, i) => Overlay(SPIOverlayKey, new SPITR4ShellPlacer(this, TR4GPIOGroup(s), SPIShellInput(i))(ValName(s"spi_${i}")))}
-  val jtagseq   = Seq(1 ->  0, 1 ->  1, 1 ->  2, 1 ->  3)
+  val jtagseq   = Seq(1 ->  0, 1 ->  1, 1 ->  2, 1 ->  3, 0 -> 34)
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugTR4ShellPlacer(this, TR4GPIOGroup(jtagseq), JTAGDebugShellInput()))
   val qspiseq   = Seq(1 -> 20, 1 -> 21, 1 -> 18, 1 -> 19)
   val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashTR4ShellPlacer(this, TR4GPIOGroup(qspiseq), SPIFlashShellInput())(ValName(s"qspi")))
@@ -539,7 +541,7 @@ class TR4ShellImpl(outer: TR4Shell) extends LazyRawModuleImp(outer) {
   outer.tdc.addIOStandard(IOPin(reset), "1.5V")
   val reset_ibuf = Module(new ALT_IOBUF)
   attach(reset_ibuf.io.io, reset)
-  outer.resetPin := ~reset_ibuf.asInput()
+  outer.resetPin := !reset_ibuf.asInput() || outer.ndreset
   outer.pllReset := outer.resetPin
 }
 
