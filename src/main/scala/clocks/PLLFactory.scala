@@ -1,11 +1,10 @@
-// See LICENSE for license details.
 package sifive.fpgashells.clocks
 
 import chisel3._
-import freechips.rocketchip.config._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.prci._
+import org.chipsalliance.cde.config._
 import sifive.fpgashells.shell._
-import scala.collection.immutable.ListMap
 
 case class PLLNode(val feedback: Boolean)(implicit valName: ValName)
   extends MixedNexusNode(ClockImp, ClockGroupImp)(
@@ -59,24 +58,24 @@ class PLLFactory(scope: IOShell, maxOutputs: Int, gen: PLLParameters => PLLInsta
       val params = PLLParameters(
         name = node.valName.name,
         input = PLLInClockParameters(
-          freqMHz  = edgeIn.clock.freqMHz,
+          freqMHz  = edgeIn.clock.get.freqMHz,
           jitter   = edgeIn.source.jitterPS.getOrElse(50),
           feedback = node.feedback),
         req = edgeOut.flatMap(_.members).map { e =>
           PLLOutClockParameters(
-            freqMHz       = e.clock.freqMHz,
-            phaseDeg      = e.sink.phaseDeg,
-            dutyCycle     = e.clock.dutyCycle,
-            jitterPS      = e.sink.jitterPS,
-            freqErrorPPM  = e.sink.freqErrorPPM,
-            phaseErrorDeg = e.sink.phaseErrorDeg)})
+            freqMHz       = e._2.clock.get.freqMHz,
+            phaseDeg      = e._2.sink.phaseDeg,
+            dutyCycle     = e._2.clock.get.dutyCycle,
+            jitterPS      = e._2.sink.jitterPS,
+            freqErrorPPM  = e._2.sink.freqErrorPPM,
+            phaseErrorDeg = e._2.sink.phaseErrorDeg)})
 
       val pll = gen(params)
       pll.getInput := in.clock
       pll.getReset.foreach { _ := in.reset }
-      (out.flatMap(_.member) zip pll.getClocks) foreach { case (o, i) =>
+      (out.flatMap(_.member.data) zip pll.getClocks) foreach { case (o, i) =>
         o.clock := i
-        o.reset := !pll.getLocked || in.reset
+        o.reset := !pll.getLocked || in.reset.asBool
       }
       Some((pll, node))
     }
@@ -96,3 +95,19 @@ class PLLFactory(scope: IOShell, maxOutputs: Int, gen: PLLParameters => PLLInsta
     plls
   } }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

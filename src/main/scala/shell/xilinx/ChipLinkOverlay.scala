@@ -1,11 +1,10 @@
-// See LICENSE for license details.
 package sifive.fpgashells.shell.xilinx
 
 import chisel3._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.util._
-import sifive.fpgashells.shell._
 import sifive.fpgashells.ip.xilinx._
+import sifive.fpgashells.shell._
 
 abstract class ChipLinkXilinxPlacedOverlay(name: String, di: ChipLinkDesignInput, si: ChipLinkShellInput, rxPhase: Double, txPhase: Double, rxMargin: Double, txMargin: Double)
   extends ChipLinkPlacedOverlay(name, di.copy(di = di.di.copy(fpgaReset = true))(di.p), si, rxPhase, txPhase)
@@ -61,7 +60,7 @@ abstract class ChipLinkXilinxPlacedOverlay(name: String, di: ChipLinkDesignInput
       minOutput = -0.65 - txMargin,
       maxOutput =  1.85 + txMargin)
 
-    shell.sdc.addClock(s"${name}_b2c_clock", io.b2c.clk, rxEdge.clock.freqMHz, 0.3)
+    shell.sdc.addClock(s"${name}_b2c_clock", io.b2c.clk, rxEdge.clock.get.freqMHz, 0.3)
     shell.sdc.addDerivedClock(s"${name}_c2b_clock", oddr.io.C, io.c2b.clk)
     IOPin.of(io).filter(p => p.isInput  && !(p.element eq io.b2c.clk)).foreach { e =>
       shell.sdc.addIOTiming(e, s"${name}_b2c_clock", timing)
@@ -71,3 +70,19 @@ abstract class ChipLinkXilinxPlacedOverlay(name: String, di: ChipLinkDesignInput
     }
   } }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

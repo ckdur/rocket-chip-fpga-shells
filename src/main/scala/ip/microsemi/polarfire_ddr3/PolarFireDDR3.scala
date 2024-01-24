@@ -1,31 +1,29 @@
-// See LICENSE for license details.
 package sifive.fpgashells.ip.microsemi.polarfireddr3
 
-import Chisel._
-import chisel3.experimental.{Analog,attach}
-import freechips.rocketchip.util.{ElaborationArtefacts}
-import freechips.rocketchip.util.GenericParameterizedBundle
-import freechips.rocketchip.config._
+import chisel3._
+import chisel3.experimental.Analog
+import freechips.rocketchip.util.ElaborationArtefacts
+import org.chipsalliance.cde.config._
 
 // Black Box for Microsemi PolarFire DDR3 controller version 2.1.101
 
-class PolarFireEvalKitDDR3IODDR(depth : BigInt) extends GenericParameterizedBundle(depth) {
+class PolarFireEvalKitDDR3IODDR(depth : BigInt) extends Bundle {
 
-  val A                     = Bits(OUTPUT,16)
-  val BA                    = Bits(OUTPUT,3)
-  val RAS_N                 = Bool(OUTPUT)
-  val CAS_N                 = Bool(OUTPUT)
-  val WE_N                  = Bool(OUTPUT)
-  val CTRLR_READY           = Bool(OUTPUT)
-  val SHIELD0               = Bool(OUTPUT)
-  val SHIELD1               = Bool(OUTPUT)
-  val CK0                   = Bits(OUTPUT,1)
-  val CK0_N                 = Bits(OUTPUT,1)
-  val CKE                   = Bits(OUTPUT,1)
-  val CS_N                  = Bits(OUTPUT,1)
-  val DM                    = Bits(OUTPUT,2)
-  val ODT                   = Bits(OUTPUT,1)
-  val RESET_N               = Bool(OUTPUT)
+  val A                     = Output(Bits(16.W))
+  val BA                    = Output(Bits(3.W))
+  val RAS_N                 = Output(Bool())
+  val CAS_N                 = Output(Bool())
+  val WE_N                  = Output(Bool())
+  val CTRLR_READY           = Output(Bool())
+  val SHIELD0               = Output(Bool())
+  val SHIELD1               = Output(Bool())
+  val CK0                   = Output(Bits(1.W))
+  val CK0_N                 = Output(Bits(1.W))
+  val CKE                   = Output(Bits(1.W))
+  val CS_N                  = Output(Bits(1.W))
+  val DM                    = Output(Bits(2.W))
+  val ODT                   = Output(Bits(1.W))
+  val RESET_N               = Output(Bool())
   
   val DQ                    = Analog(16.W)
   val DQS                   = Analog(2.W)
@@ -34,11 +32,11 @@ class PolarFireEvalKitDDR3IODDR(depth : BigInt) extends GenericParameterizedBund
 
 trait PolarFireEvalKitDDR3IOClocksReset extends Bundle {
 
-  val SYS_RESET_N           = Bool(INPUT)
-  val PLL_REF_CLK           = Clock(INPUT)  
+  val SYS_RESET_N           = Input(Bool())
+  val PLL_REF_CLK           = Input(Clock())  
   
-  val SYS_CLK               = Clock(OUTPUT)  
-  val PLL_LOCK              = Bool(OUTPUT)
+  val SYS_CLK               = Output(Clock())
+  val PLL_LOCK              = Output(Bool())
   
 }
 
@@ -48,52 +46,52 @@ class DDR3_Subsys(depth : BigInt)(implicit val p:Parameters) extends BlackBox
 {
   override def desiredName = "pf_ddr"
 
-  val io = new PolarFireEvalKitDDR3IODDR(depth) with PolarFireEvalKitDDR3IOClocksReset {
+  val io = IO(new PolarFireEvalKitDDR3IODDR(depth) with PolarFireEvalKitDDR3IOClocksReset {
     //axi slave interface
     //slave interface write address ports
-    val axi0_awid             = Bits(INPUT,4)
-    val axi0_awaddr           = Bits(INPUT,32)
-    val axi0_awlen            = Bits(INPUT,8)
-    val axi0_awsize           = Bits(INPUT,3)
-    val axi0_awburst          = Bits(INPUT,2)
-    val axi0_awlock           = Bits(INPUT,2)
-    val axi0_awcache          = Bits(INPUT,4)
-    val axi0_awprot           = Bits(INPUT,3)
-    val axi0_awvalid          = Bool(INPUT)
-    val axi0_awready          = Bool(OUTPUT)
+    val axi0_awid             = Input(Bits(4.W))
+    val axi0_awaddr           = Input(Bits(32.W))
+    val axi0_awlen            = Input(Bits(8.W))
+    val axi0_awsize           = Input(Bits(3.W))
+    val axi0_awburst          = Input(Bits(2.W))
+    val axi0_awlock           = Input(Bits(2.W))
+    val axi0_awcache          = Input(Bits(4.W))
+    val axi0_awprot           = Input(Bits(3.W))
+    val axi0_awvalid          = Input(Bool())
+    val axi0_awready          = Output(Bool())
     //slave interface write data ports
-    val axi0_wdata            = Bits(INPUT,64)
-    val axi0_wstrb            = Bits(INPUT,8)
-    val axi0_wlast            = Bool(INPUT)
-    val axi0_wvalid           = Bool(INPUT)
-    val axi0_wready           = Bool(OUTPUT)
+    val axi0_wdata            = Input(Bits(64.W))
+    val axi0_wstrb            = Input(Bits(8.W))
+    val axi0_wlast            = Input(Bool())
+    val axi0_wvalid           = Input(Bool())
+    val axi0_wready           = Output(Bool())
     //slave interface write response ports
-    val axi0_bready           = Bool(INPUT)
-    val axi0_bid              = Bits(OUTPUT,4)
-    val axi0_bresp            = Bits(OUTPUT,2)
-    val axi0_bvalid           = Bool(OUTPUT)
+    val axi0_bready           = Input(Bool())
+    val axi0_bid              = Output(Bits(4.W))
+    val axi0_bresp            = Output(Bits(2.W))
+    val axi0_bvalid           = Output(Bool())
     //slave interface read address ports
-    val axi0_arid             = Bits(INPUT,4)
-    val axi0_araddr           = Bits(INPUT,32)
-    val axi0_arlen            = Bits(INPUT,8)
-    val axi0_arsize           = Bits(INPUT,3)
-    val axi0_arburst          = Bits(INPUT,2)
-    val axi0_arlock           = Bits(INPUT,2)
-    val axi0_arcache          = Bits(INPUT,4)
-    val axi0_arprot           = Bits(INPUT,3)
-    val axi0_arvalid          = Bool(INPUT)
-    val axi0_arready          = Bool(OUTPUT)
+    val axi0_arid             = Input(Bits(4.W))
+    val axi0_araddr           = Input(Bits(32.W))
+    val axi0_arlen            = Input(Bits(8.W))
+    val axi0_arsize           = Input(Bits(3.W))
+    val axi0_arburst          = Input(Bits(2.W))
+    val axi0_arlock           = Input(Bits(2.W))
+    val axi0_arcache          = Input(Bits(4.W))
+    val axi0_arprot           = Input(Bits(3.W))
+    val axi0_arvalid          = Input(Bool())
+    val axi0_arready          = Output(Bool())
     //slave interface read data ports
-    val axi0_rready           = Bool(INPUT)
-    val axi0_rid              = Bits(OUTPUT,4)
-    val axi0_rdata            = Bits(OUTPUT,64)
-    val axi0_rresp            = Bits(OUTPUT,2)
-    val axi0_rlast            = Bool(OUTPUT)
-    val axi0_rvalid           = Bool(OUTPUT)
+    val axi0_rready           = Input(Bool())
+    val axi0_rid              = Output(Bits(4.W))
+    val axi0_rdata            = Output(Bits(64.W))
+    val axi0_rresp            = Output(Bits(2.W))
+    val axi0_rlast            = Output(Bool())
+    val axi0_rvalid           = Output(Bool())
     //misc
-    val AXI0_AWUSERTAG        = Bits(INPUT,4)
-    val AXI0_BUSERTAG         = Bits(OUTPUT,4)
-  }
+    val AXI0_AWUSERTAG        = Input(Bits(4.W))
+    val AXI0_BUSERTAG         = Output(Bits(4.W))
+  })
 
   ElaborationArtefacts.add(
     "AddIPInstance.polarfire_ddr3.libero.tcl",
@@ -127,3 +125,19 @@ close_design -component pf_ddr
   )
 }
 //scalastyle:on
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

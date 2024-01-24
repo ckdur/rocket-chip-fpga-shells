@@ -1,14 +1,12 @@
-// See LICENSE for license details.
 package sifive.fpgashells.devices.xilinx.xilinxvc707mig
 
-import Chisel._
-import chisel3.experimental.{Analog,attach}
+import chisel3._
+import chisel3.experimental.attach
 import freechips.rocketchip.amba.axi4._
-import freechips.rocketchip.config.Parameters
-import freechips.rocketchip.subsystem._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.subsystem._
 import freechips.rocketchip.tilelink._
-import freechips.rocketchip.interrupts._
+import org.chipsalliance.cde.config.Parameters
 import sifive.fpgashells.ip.xilinx.vc707mig.{VC707MIGIOClocksReset, VC707MIGIODDR, vc707mig}
 
 case class XilinxVC707MIGParams(
@@ -41,11 +39,12 @@ class XilinxVC707MIGIsland(c : XilinxVC707MIGParams, val crossing: ClockCrossing
       supportsRead  = TransferSizes(1, 128))),
     beatBytes = 8)))
 
-  lazy val module = new LazyRawModuleImp(this) {
+  lazy val module = new Impl
+  class Impl extends LazyRawModuleImp(this) {
     val io = IO(new Bundle {
       val port = new XilinxVC707MIGIO(depth)
     })
-
+    override def provideImplicitClockToLazyChildren = true
     childClock := io.port.ui_clk
     childReset := io.port.ui_clk_sync_rst
 
@@ -82,15 +81,15 @@ class XilinxVC707MIGIsland(c : XilinxVC707MIGParams, val crossing: ClockCrossing
     io.port.ui_clk_sync_rst   := blackbox.io.ui_clk_sync_rst
     io.port.mmcm_locked       := blackbox.io.mmcm_locked
     blackbox.io.aresetn       := io.port.aresetn
-    blackbox.io.app_sr_req    := Bool(false)
-    blackbox.io.app_ref_req   := Bool(false)
-    blackbox.io.app_zq_req    := Bool(false)
+    blackbox.io.app_sr_req    := false.B
+    blackbox.io.app_ref_req   := false.B
+    blackbox.io.app_zq_req    := false.B
     //app_sr_active           := unconnected
     //app_ref_ack             := unconnected
     //app_zq_ack              := unconnected
 
-    val awaddr = axi_async.aw.bits.addr - UInt(offset)
-    val araddr = axi_async.ar.bits.addr - UInt(offset)
+    val awaddr = axi_async.aw.bits.addr - offset.U 
+    val araddr = axi_async.ar.bits.addr - offset.U
 
     //slave AXI interface write address ports
     blackbox.io.s_axi_awid    := axi_async.aw.bits.id
@@ -99,7 +98,7 @@ class XilinxVC707MIGIsland(c : XilinxVC707MIGParams, val crossing: ClockCrossing
     blackbox.io.s_axi_awsize  := axi_async.aw.bits.size
     blackbox.io.s_axi_awburst := axi_async.aw.bits.burst
     blackbox.io.s_axi_awlock  := axi_async.aw.bits.lock
-    blackbox.io.s_axi_awcache := UInt("b0011")
+    blackbox.io.s_axi_awcache := "b0011".U
     blackbox.io.s_axi_awprot  := axi_async.aw.bits.prot
     blackbox.io.s_axi_awqos   := axi_async.aw.bits.qos
     blackbox.io.s_axi_awvalid := axi_async.aw.valid
@@ -125,7 +124,7 @@ class XilinxVC707MIGIsland(c : XilinxVC707MIGParams, val crossing: ClockCrossing
     blackbox.io.s_axi_arsize  := axi_async.ar.bits.size
     blackbox.io.s_axi_arburst := axi_async.ar.bits.burst
     blackbox.io.s_axi_arlock  := axi_async.ar.bits.lock
-    blackbox.io.s_axi_arcache := UInt("b0011")
+    blackbox.io.s_axi_arcache := "b0011".U
     blackbox.io.s_axi_arprot  := axi_async.ar.bits.prot
     blackbox.io.s_axi_arqos   := axi_async.ar.bits.qos
     blackbox.io.s_axi_arvalid := axi_async.ar.valid
@@ -160,7 +159,8 @@ class XilinxVC707MIG(c : XilinxVC707MIGParams, crossing: ClockCrossingType = Asy
   val node: TLInwardNode =
     island.crossAXI4In(island.node) := yank.node := deint.node := indexer.node := toaxi4.node := buffer.node
 
-  lazy val module = new LazyModuleImp(this) {
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
     val io = IO(new Bundle {
       val port = new XilinxVC707MIGIO(depth)
     })
@@ -168,3 +168,19 @@ class XilinxVC707MIG(c : XilinxVC707MIGParams, crossing: ClockCrossingType = Asy
     io.port <> island.module.io.port
   }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

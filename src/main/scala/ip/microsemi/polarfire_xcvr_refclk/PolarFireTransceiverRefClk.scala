@@ -1,20 +1,17 @@
-// See LICENSE for license details.
 package sifive.fpgashells.ip.microsemi.polarfirexcvrrefclk
 
-import Chisel._
-import chisel3.experimental.{Analog,attach}
-import freechips.rocketchip.util.{ElaborationArtefacts}
-import freechips.rocketchip.util.GenericParameterizedBundle
-import freechips.rocketchip.config._
+import chisel3._
+import freechips.rocketchip.util.ElaborationArtefacts
+import org.chipsalliance.cde.config._
 
 // Black Box for Microsemi:SgCore:PF_XCVR_REF_CLK:1.0.103
 
 trait PolarFireTransceiverRefClkIOPads extends Bundle {
 
-    val REF_CLK_PAD_P   = Bool(INPUT)
-    val REF_CLK_PAD_N   = Bool(INPUT)
-    val REF_CLK         = Clock(OUTPUT)
-    val FAB_REF_CLK     = Clock(OUTPUT)
+    val REF_CLK_PAD_P   = Input(Bool())
+    val REF_CLK_PAD_N   = Input(Bool())
+    val REF_CLK         = Output(Clock())
+    val FAB_REF_CLK     = Output(Clock())
 }
 
 //scalastyle:off
@@ -23,8 +20,7 @@ class PolarFireTransceiverRefClk(implicit val p:Parameters) extends BlackBox
 {
   override def desiredName = "transceiver_refclk"
 
-  val io = new PolarFireTransceiverRefClkIOPads {
-  }
+  val io = IO(new PolarFireTransceiverRefClkIOPads {})
   
   ElaborationArtefacts.add(
     "Libero.polarfire_xcvr_refclk.libero.tcl",
@@ -44,3 +40,19 @@ configure_design -component {transceiver_refclk} -library {}
 
 }
 //scalastyle:on
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

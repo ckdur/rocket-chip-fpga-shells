@@ -1,19 +1,18 @@
-// See LICENSE for license details.
 package sifive.fpgashells.shell.xilinx
 
 import chisel3._
-import chisel3.experimental.{attach, Analog, IO}
-import freechips.rocketchip.config._
+import chisel3.experimental.{Analog, attach}
+import chisel3.experimental.dataview._
 import freechips.rocketchip.diplomacy._
-import freechips.rocketchip.tilelink._
-import freechips.rocketchip.util.SyncResetSynchronizerShiftReg
+import freechips.rocketchip.prci._
+import org.chipsalliance.cde.config._
 import sifive.fpgashells.clocks._
-import sifive.fpgashells.shell._
-import sifive.fpgashells.ip.xilinx._
-import sifive.blocks.devices.chiplink._
-import sifive.fpgashells.devices.xilinx.xilinxvcu118mig._
 import sifive.fpgashells.devices.xilinx.xdma._
+import sifive.fpgashells.devices.xilinx.xilinxvcu118mig._
+import sifive.fpgashells.ip.xilinx._
 import sifive.fpgashells.ip.xilinx.xxv_ethernet._
+import sifive.fpgashells.ip.xilinx.vcu118mig._
+import sifive.fpgashells.shell._
 
 class SysClockVCU118PlacedOverlay(val shell: VCU118ShellBasicOverlays, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)
   extends LVDSClockInputXilinxPlacedOverlay(name, designInput, shellInput)
@@ -311,8 +310,6 @@ class DDRVCU118PlacedOverlay(val shell: VCU118ShellBasicOverlays, name: String, 
 
   val migParams = XilinxVCU118MIGParams(address = AddressSet.misaligned(di.baseAddress, size))
   val mig = LazyModule(new XilinxVCU118MIG(migParams))
-  val ioNode = BundleBridgeSource(() => mig.module.io.cloneType)
-  val topIONode = shell { ioNode.makeSink() }
   val ddrUI     = shell { ClockSourceNode(freqMHz = 200) }
   val areset    = shell { ClockSinkNode(Seq(ClockSinkParameters())) }
   areset := designInput.wrangler := ddrUI
@@ -320,20 +317,18 @@ class DDRVCU118PlacedOverlay(val shell: VCU118ShellBasicOverlays, name: String, 
   def overlayOutput = DDROverlayOutput(ddr = mig.node)
   def ioFactory = new XilinxVCU118MIGPads(size)
 
-  InModuleBody { ioNode.bundle <> mig.module.io }
-
   shell { InModuleBody {
     require (shell.sys_clock.get.isDefined, "Use of DDRVCU118Overlay depends on SysClockVCU118Overlay")
     val (sys, _) = shell.sys_clock.get.get.overlayOutput.node.out(0)
     val (ui, _) = ddrUI.out(0)
     val (ar, _) = areset.in(0)
-    val port = topIONode.bundle.port
-    io <> port
+    val port = mig.module.io.port
+    io <> port.viewAsSupertype(new VCU118MIGIODDR(mig.depth))
     ui.clock := port.c0_ddr4_ui_clk
     ui.reset := /*!port.mmcm_locked ||*/ port.c0_ddr4_ui_clk_sync_rst
     port.c0_sys_clk_i := sys.clock.asUInt
     port.sys_rst := sys.reset // pllReset
-    port.c0_ddr4_aresetn := !ar.reset
+    port.c0_ddr4_aresetn := !(ar.reset.asBool)
 
     val allddrpins = Seq(  "D14", "B15", "B16", "C14", "C15", "A13", "A14",
       "A15", "A16", "B12", "C12", "B13", "C13", "D15", "H14", "H15", "F15",
@@ -528,3 +523,19 @@ class VCU118Shell()(implicit p: Parameters) extends VCU118ShellBasicOverlays
     pllReset := (reset_ibuf.io.O || powerOnReset || ereset)
   }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

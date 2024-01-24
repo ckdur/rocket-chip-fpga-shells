@@ -1,13 +1,12 @@
 package sifive.fpgashells.ip.xilinx.bscan2
-
 import chisel3._
+import chisel3.experimental.ExtModule
 import chisel3.util._
-import chisel3.experimental.{ExtModule, Analog, attach}
 
 object JTAGTUNNEL {
   def apply (DUT_TCK: Bool, DUT_TMS: Bool, DUT_TDI: Bool, DUT_TDO:Bool, DUT_TDO_en: Bool): Unit = {
     val inst_jtag_tunnel = Module(new JTAGTUNNEL())
-    DUT_TCK := inst_jtag_tunnel.jtag_tck.asBool()
+    DUT_TCK := inst_jtag_tunnel.jtag_tck.asBool
     DUT_TMS := inst_jtag_tunnel.jtag_tms
     DUT_TDI := inst_jtag_tunnel.jtag_tdi
     inst_jtag_tunnel.jtag_tdo := DUT_TDO
@@ -35,7 +34,7 @@ class BSCANE2 extends ExtModule(Map("JTAG_CHAIN" -> 4)) {
   val UPDATE = IO(Output(Bool()))
 }
 
-class JTAGTUNNEL extends MultiIOModule {
+class JTAGTUNNEL extends Module {
   val jtag_tck: Clock = IO(Output(Clock()))
   val jtag_tms: Bool = IO(Output(Bool()))
   val jtag_tdi: Bool = IO(Output(Bool()))
@@ -82,3 +81,19 @@ class JTAGTUNNEL extends MultiIOModule {
     }
   }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

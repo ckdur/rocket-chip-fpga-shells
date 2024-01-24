@@ -1,10 +1,9 @@
-// See LICENSE for license details.
 package sifive.fpgashells.devices.xilinx.xilinxvcu118mig
 
-import Chisel._
-import freechips.rocketchip.config._
+import freechips.rocketchip.diplomacy.{AddressRange, LazyModule, LazyModuleImp}
 import freechips.rocketchip.subsystem.BaseSubsystem
-import freechips.rocketchip.diplomacy.{LazyModule, LazyModuleImp, AddressRange}
+import freechips.rocketchip.tilelink.TLWidthWidget
+import org.chipsalliance.cde.config._
 
 case object MemoryXilinxDDRKey extends Field[XilinxVCU118MIGParams]
 
@@ -13,7 +12,7 @@ trait HasMemoryXilinxVCU118MIG { this: BaseSubsystem =>
 
   val xilinxvcu118mig = LazyModule(new XilinxVCU118MIG(p(MemoryXilinxDDRKey)))
 
-  xilinxvcu118mig.node := mbus.toDRAMController(Some("xilinxvcu118mig"))()
+  mbus.coupleTo("xilinxvcu118mig") { xilinxvcu118mig.node := TLWidthWidget(mbus.beatBytes) := _ }
 }
 
 trait HasMemoryXilinxVCU118MIGBundle {
@@ -33,3 +32,19 @@ trait HasMemoryXilinxVCU118MIGModuleImp extends LazyModuleImp
 
   xilinxvcu118mig <> outer.xilinxvcu118mig.module.io.port
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

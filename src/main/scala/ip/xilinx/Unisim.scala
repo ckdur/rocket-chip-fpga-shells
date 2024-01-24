@@ -1,11 +1,8 @@
-// See LICENSE for license details.
 
 package sifive.fpgashells.ip.xilinx
-import Chisel._
-import chisel3.{Input, Output}
-import chisel3.experimental.{Analog, attach, StringParam, RawParam, IntParam, DoubleParam}
-
-import sifive.blocks.devices.pinctrl.{BasePin}
+import chisel3._
+import chisel3.experimental.{Analog, DoubleParam, IntParam, RawParam, StringParam, attach}
+import sifive.blocks.devices.pinctrl.BasePin
 
 object booleanToVerilogVectorParam extends (Boolean => RawParam) {
   def apply(b : Boolean) : RawParam =  if(b) RawParam("1") else RawParam("0")
@@ -94,11 +91,11 @@ extends BlackBox(
   )
 ) {
   val io = IO(new Bundle {
-    val O         = Bool(OUTPUT)
-    val ODIV2     = Bool(OUTPUT)
-    val CEB       = Bool(INPUT)
-    val I         = Bool(INPUT)
-    val IB        = Bool(INPUT)
+    val O         = Output(Bool())
+    val ODIV2     = Output(Bool())
+    val CEB       = Input(Bool())
+    val I         = Input(Bool())
+    val IB        = Input(Bool())
   })
 }
 
@@ -112,11 +109,11 @@ class IBUFDS_GTE4(
     "REFCLK_ICNTL_RX"    -> IntParam(REFCLK_ICNTL_RX)))
 {
   val io = IO(new Bundle {
-    val O     = Clock(OUTPUT)
-    val ODIV2 = Clock(OUTPUT)
-    val CEB   = Bool(INPUT)
-    val I     = Clock(INPUT)
-    val IB    = Clock(INPUT)
+    val O     = Output(Clock())
+    val ODIV2 = Output(Clock())
+    val CEB   = Input(Bool())
+    val I     = Input(Clock())
+    val IB    = Input(Clock())
   })
 
 }
@@ -257,12 +254,12 @@ extends BlackBox(
 
 class IOBUF extends BlackBox {
 
-  val io = new Bundle {
+  val io = IO(new Bundle {
     val O = Output(Bool())
     val IO = Analog(1.W)
     val I = Input(Bool())
     val T = Input(Bool())
-  }
+  })
 }
 
 object IOBUF {
@@ -401,3 +398,19 @@ object KEEPER {
     }
 }
 
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

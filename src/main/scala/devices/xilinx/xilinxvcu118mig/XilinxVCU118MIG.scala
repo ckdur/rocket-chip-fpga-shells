@@ -1,14 +1,12 @@
-// See LICENSE for license details.
 package sifive.fpgashells.devices.xilinx.xilinxvcu118mig
 
-import Chisel._
-import chisel3.experimental.{Analog,attach}
+import chisel3._
+import chisel3.experimental.attach
 import freechips.rocketchip.amba.axi4._
-import freechips.rocketchip.config.Parameters
-import freechips.rocketchip.subsystem._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.subsystem._
 import freechips.rocketchip.tilelink._
-import freechips.rocketchip.interrupts._
+import org.chipsalliance.cde.config.Parameters
 import sifive.fpgashells.ip.xilinx.vcu118mig.{VCU118MIGIOClocksReset, VCU118MIGIODDR, vcu118mig}
 
 case class XilinxVCU118MIGParams(
@@ -42,7 +40,8 @@ class XilinxVCU118MIGIsland(c : XilinxVCU118MIGParams)(implicit p: Parameters) e
       supportsRead  = TransferSizes(1, 256*8))),
     beatBytes = 8)))
 
-  lazy val module = new LazyModuleImp(this) {
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
     val io = IO(new Bundle {
       val port = new XilinxVCU118MIGIO(depth)
     })
@@ -79,8 +78,8 @@ class XilinxVCU118MIGIsland(c : XilinxVCU118MIGParams)(implicit p: Parameters) e
     io.port.c0_ddr4_ui_clk_sync_rst := blackbox.io.c0_ddr4_ui_clk_sync_rst
     blackbox.io.c0_ddr4_aresetn := io.port.c0_ddr4_aresetn
 
-    val awaddr = axi_async.aw.bits.addr - UInt(offset)
-    val araddr = axi_async.ar.bits.addr - UInt(offset)
+    val awaddr = axi_async.aw.bits.addr - offset.U
+    val araddr = axi_async.ar.bits.addr - offset.U
 
     //slave AXI interface write address ports
     blackbox.io.c0_ddr4_s_axi_awid    := axi_async.aw.bits.id
@@ -89,7 +88,7 @@ class XilinxVCU118MIGIsland(c : XilinxVCU118MIGParams)(implicit p: Parameters) e
     blackbox.io.c0_ddr4_s_axi_awsize  := axi_async.aw.bits.size
     blackbox.io.c0_ddr4_s_axi_awburst := axi_async.aw.bits.burst
     blackbox.io.c0_ddr4_s_axi_awlock  := axi_async.aw.bits.lock
-    blackbox.io.c0_ddr4_s_axi_awcache := UInt("b0011")
+    blackbox.io.c0_ddr4_s_axi_awcache := "b0011".U
     blackbox.io.c0_ddr4_s_axi_awprot  := axi_async.aw.bits.prot
     blackbox.io.c0_ddr4_s_axi_awqos   := axi_async.aw.bits.qos
     blackbox.io.c0_ddr4_s_axi_awvalid := axi_async.aw.valid
@@ -115,7 +114,7 @@ class XilinxVCU118MIGIsland(c : XilinxVCU118MIGParams)(implicit p: Parameters) e
     blackbox.io.c0_ddr4_s_axi_arsize  := axi_async.ar.bits.size
     blackbox.io.c0_ddr4_s_axi_arburst := axi_async.ar.bits.burst
     blackbox.io.c0_ddr4_s_axi_arlock  := axi_async.ar.bits.lock
-    blackbox.io.c0_ddr4_s_axi_arcache := UInt("b0011")
+    blackbox.io.c0_ddr4_s_axi_arcache := "b0011".U
     blackbox.io.c0_ddr4_s_axi_arprot  := axi_async.ar.bits.prot
     blackbox.io.c0_ddr4_s_axi_arqos   := axi_async.ar.bits.qos
     blackbox.io.c0_ddr4_s_axi_arvalid := axi_async.ar.valid
@@ -149,7 +148,8 @@ class XilinxVCU118MIG(c : XilinxVCU118MIGParams)(implicit p: Parameters) extends
   val node: TLInwardNode =
     island.crossAXI4In(island.node) := yank.node := deint.node := indexer.node := toaxi4.node := buffer.node
 
-  lazy val module = new LazyModuleImp(this) {
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
     val io = IO(new Bundle {
       val port = new XilinxVCU118MIGIO(depth)
     })
@@ -161,3 +161,19 @@ class XilinxVCU118MIG(c : XilinxVCU118MIGParams)(implicit p: Parameters) extends
     island.module.reset := io.port.c0_ddr4_ui_clk_sync_rst
   }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

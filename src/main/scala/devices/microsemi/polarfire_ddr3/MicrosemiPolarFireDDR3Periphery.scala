@@ -1,11 +1,10 @@
-// See LICENSE for license details.
 package sifive.fpgashells.devices.microsemi.polarfireddr3
 
-import Chisel._
-import freechips.rocketchip.config._
+import org.chipsalliance.cde.config._
 //import freechips.rocketchip.coreplex.HasMemoryBus
+import freechips.rocketchip.diplomacy.{AddressRange, LazyModule, LazyModuleImp}
 import freechips.rocketchip.subsystem.BaseSubsystem
-import freechips.rocketchip.diplomacy.{LazyModule, LazyModuleImp, AddressRange}
+import freechips.rocketchip.tilelink.TLWidthWidget
 
 case object MemoryMicrosemiDDR3Key extends Field[PolarFireEvalKitDDR3Params]
 
@@ -15,7 +14,7 @@ trait HasMemoryPolarFireEvalKitDDR3 { this: BaseSubsystem =>
 
   val polarfireddrsubsys = LazyModule(new PolarFireEvalKitDDR3(p(MemoryMicrosemiDDR3Key)))
 
-  polarfireddrsubsys.node := mbus.toDRAMController(Some("PolarFireDDR"))()
+  mbus.coupleTo("PolarFireDDR") { polarfireddrsubsys.node := TLWidthWidget(mbus.beatBytes) := _ }
 }
 
 trait HasMemoryPolarFireEvalKitDDR3Bundle {
@@ -35,3 +34,19 @@ trait HasMemoryPolarFireEvalKitDDR3ModuleImp extends LazyModuleImp
 
   polarfireddrsubsys <> outer.polarfireddrsubsys.module.io.port
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

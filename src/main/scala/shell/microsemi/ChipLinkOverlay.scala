@@ -1,11 +1,9 @@
-// See LICENSE for license details.
 package sifive.fpgashells.shell.microsemi
 
  import chisel3._
-import freechips.rocketchip.diplomacy._
-import freechips.rocketchip.util._
-import sifive.fpgashells.shell._
-import sifive.fpgashells.ip.microsemi._
+ import freechips.rocketchip.diplomacy._
+ import sifive.fpgashells.ip.microsemi._
+ import sifive.fpgashells.shell._
 
  abstract class ChipLinkPolarFirePlacedOverlay(name: String, di: ChipLinkDesignInput, si: ChipLinkShellInput)
   extends ChipLinkPlacedOverlay(name, di, si, rxPhase=180, txPhase=270)
@@ -51,7 +49,7 @@ import sifive.fpgashells.ip.microsemi._
     //       max_slow_lv_lt: 0.024ns slack + 1.5 margin
 
      // We have to add a these constants to work around some Libero timing analysis bug
-    val periodNs = 1000.0 / rxEdge.clock.freqMHz
+    val periodNs = 1000.0 / rxEdge.clock.get.freqMHz
 
      val timing = IOTiming(
       /* The data signals coming from Aloe have: clock - 1.2 <= transition <= clock + 0.8
@@ -71,7 +69,7 @@ import sifive.fpgashells.ip.microsemi._
       case Some(x: SysClockVeraPlacedOverlay) => x.clock
     }
 
-     shell.sdc.addClock(s"${name}_b2c_clock", io.b2c.clk, rxEdge.clock.freqMHz)
+     shell.sdc.addClock(s"${name}_b2c_clock", io.b2c.clk, rxEdge.clock.get.freqMHz)
     //shell.sdc.addDerivedClock(sdcTxClockName, "{corePLL/corePLL_0/pll_inst_0/OUT1}", io.c2b.clk)
     shell.sdc.addDerivedClock(s"${name}_c2b_clock", IOPin(sysclk), io.c2b.clk)
     IOPin.of(io).filter(p => p.isInput  && !(p.element eq io.b2c.clk)).foreach { e =>
@@ -82,3 +80,19 @@ import sifive.fpgashells.ip.microsemi._
     }
   } }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

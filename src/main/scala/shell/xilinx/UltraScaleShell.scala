@@ -1,16 +1,14 @@
-// See LICENSE for license details.
 package sifive.fpgashells.shell.xilinx
 
 import chisel3._
-import freechips.rocketchip.config._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
+import freechips.rocketchip.prci._
 import sifive.fpgashells.clocks._
-import sifive.fpgashells.shell._
-import sifive.fpgashells.ip.xilinx._
 import sifive.fpgashells.devices.xilinx.xdma._
-import sifive.fpgashells.devices.xilinx.ethernet._
+import sifive.fpgashells.ip.xilinx._
 import sifive.fpgashells.ip.xilinx.xxv_ethernet._
+import sifive.fpgashells.shell._
 
 class XDMATopPads(val numLanes: Int) extends Bundle {
   val refclk = Input(new LVDSClock)
@@ -133,3 +131,19 @@ abstract class PCIeUltraScalePlacedOverlay(name: String, di: PCIeDesignInput, si
     shell.sdc.addClock(s"${name}_ref_clk", io.refclk.p, 100)
   } }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

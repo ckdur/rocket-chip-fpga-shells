@@ -1,22 +1,16 @@
-// See LICENSE for license details.
 package sifive.fpgashells.shell.xilinx.vc707shell
 
-import Chisel._
-import chisel3.{Input, Output, RawModule, withClockAndReset}
-import chisel3.experimental.{attach, Analog}
-
-import freechips.rocketchip.config._
+import chisel3._
+import chisel3.experimental.{Analog, attach}
 import freechips.rocketchip.devices.debug._
-import freechips.rocketchip.util.{SyncResetSynchronizerShiftReg, ElaborationArtefacts, HeterogeneousBag}
-
-import sifive.blocks.devices.gpio._
+import freechips.rocketchip.util.{ElaborationArtefacts, SyncResetSynchronizerShiftReg}
+import org.chipsalliance.cde.config._
+import sifive.blocks.devices.chiplink._
 import sifive.blocks.devices.spi._
 import sifive.blocks.devices.uart._
-import sifive.blocks.devices.chiplink._
-
 import sifive.fpgashells.devices.xilinx.xilinxvc707mig._
 import sifive.fpgashells.devices.xilinx.xilinxvc707pciex1._
-import sifive.fpgashells.ip.xilinx.{IBUFDS, PowerOnResetFPGAOnly, sdio_spi_bridge, Series7MMCM, vc707reset}
+import sifive.fpgashells.ip.xilinx._
 
 //vc707_sys_clock_mmcm0, vc707_sys_clock_, vc707_sys_clock_mmcm2 , vc707reset}
 import sifive.fpgashells.clocks._
@@ -64,7 +58,7 @@ trait HasDebugJTAG { this: VC707Shell =>
   val jtag_TDI             = IO(Input(Bool()))
   val jtag_TDO             = IO(Output(Bool()))
 
-  def connectDebugJTAG(dut: HasPeripheryDebugModuleImp, fmcxm105: Boolean = true): SystemJTAGIO = {
+  def connectDebugJTAG(dut: HasPeripheryDebug, fmcxm105: Boolean = true): SystemJTAGIO = {
   
     require(dut.debug.isDefined, "Connecting JTAG requires that debug module exists")
     ElaborationArtefacts.add(
@@ -129,7 +123,7 @@ trait HasDebugJTAG { this: VC707Shell =>
 trait HasVC707ChipLink { this: VC707Shell =>
 
   val chiplink = IO(new WideDataLayerPort(ChipLinkParams(Nil,Nil)))
-  val ereset_n = IO(Bool(INPUT))
+  val ereset_n = IO(Input(Bool()))
 
   def constrainChipLink(iofpga: Boolean = false): Unit = {
     val direction0Pins = if(iofpga) "chiplink_b2c"  else "chiplink_c2b"
@@ -549,8 +543,8 @@ abstract class VC707Shell(implicit val p: Parameters) extends RawModule {
   mig_clock            := dut_clock
   pcie_dat_clock       := dut_clock
   pcie_cfg_clock       := dut_clock
-  mig_mmcm_locked      := UInt("b1")
-  mmcm_lock_pcie       := UInt("b1")
+  mig_mmcm_locked      := "b1".U
+  mmcm_lock_pcie       := "b1".U
  
 
 
@@ -563,7 +557,7 @@ abstract class VC707Shell(implicit val p: Parameters) extends RawModule {
   def connectUART(dut: HasPeripheryUARTModuleImp): Unit = dut.uart.headOption.foreach(connectUART)
 
   def connectUART(uart: UARTPortIO): Unit = {
-    uart.rxd := SyncResetSynchronizerShiftReg(uart_rx, 2, init = Bool(true), name=Some("uart_rxd_sync"))
+    uart.rxd := SyncResetSynchronizerShiftReg(uart_rx, 2, init = true.B, name=Some("uart_rxd_sync"))
     uart_tx  := uart.txd
   }
 
@@ -611,3 +605,19 @@ abstract class VC707Shell(implicit val p: Parameters) extends RawModule {
       |add_files -quiet -norecurse -fileset $obj [file join $boarddir tcl clocks.tcl]
       |""".stripMargin)
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

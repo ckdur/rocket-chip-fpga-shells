@@ -1,15 +1,13 @@
-// See LICENSE for license details.
 package sifive.fpgashells.devices.microsemi.polarfireddr4
 
-import Chisel._
-import chisel3.experimental.{Analog,attach}
+import chisel3._
+import chisel3.experimental.attach
 import freechips.rocketchip.amba.axi4._
-import freechips.rocketchip.config.Parameters
-import freechips.rocketchip.subsystem._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.subsystem._
 import freechips.rocketchip.tilelink._
-import freechips.rocketchip.interrupts._
-import sifive.fpgashells.ip.microsemi.polarfireddr4.{PolarFireEvalKitDDR4IOClocksReset, PolarFireEvalKitDDR4IODDR, DDR4_Subsys}
+import org.chipsalliance.cde.config.Parameters
+import sifive.fpgashells.ip.microsemi.polarfireddr4.{DDR4_Subsys, PolarFireEvalKitDDR4IOClocksReset, PolarFireEvalKitDDR4IODDR}
 
 case class PolarFireEvalKitDDR4Params(
   address : Seq[AddressSet]
@@ -42,7 +40,8 @@ class PolarFireEvalKitDDR4Island(c : PolarFireEvalKitDDR4Params)(implicit p: Par
       supportsRead  = TransferSizes(1, 128))),
     beatBytes = 8)))
 
-  lazy val module = new LazyModuleImp(this) {
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
     val io = IO(new Bundle {
       val port = new PolarFireEvalKitDDR4IO(depth)
     })
@@ -79,8 +78,8 @@ class PolarFireEvalKitDDR4Island(c : PolarFireEvalKitDDR4Params)(implicit p: Par
     io.port.SHIELD1           := blackbox.io.SHIELD1
 
     //inputs
-    val awaddr = axi_async.aw.bits.addr - UInt(offset)
-    val araddr = axi_async.ar.bits.addr - UInt(offset)
+    val awaddr = axi_async.aw.bits.addr - offset.U
+    val araddr = axi_async.ar.bits.addr - offset.U
 
     //slave AXI interface write address ports
     blackbox.io.axi0_awid    := axi_async.aw.bits.id
@@ -89,7 +88,7 @@ class PolarFireEvalKitDDR4Island(c : PolarFireEvalKitDDR4Params)(implicit p: Par
     blackbox.io.axi0_awsize  := axi_async.aw.bits.size
     blackbox.io.axi0_awburst := axi_async.aw.bits.burst
     blackbox.io.axi0_awlock  := axi_async.aw.bits.lock
-    blackbox.io.axi0_awcache := UInt("b0011")
+    blackbox.io.axi0_awcache := "b0011".U
     blackbox.io.axi0_awprot  := axi_async.aw.bits.prot
     blackbox.io.axi0_awvalid := axi_async.aw.valid
     axi_async.aw.ready        := blackbox.io.axi0_awready
@@ -114,7 +113,7 @@ class PolarFireEvalKitDDR4Island(c : PolarFireEvalKitDDR4Params)(implicit p: Par
     blackbox.io.axi0_arsize  := axi_async.ar.bits.size
     blackbox.io.axi0_arburst := axi_async.ar.bits.burst
     blackbox.io.axi0_arlock  := axi_async.ar.bits.lock
-    blackbox.io.axi0_arcache := UInt("b0011")
+    blackbox.io.axi0_arcache := "b0011".U
     blackbox.io.axi0_arprot  := axi_async.ar.bits.prot
     blackbox.io.axi0_arvalid := axi_async.ar.valid
     axi_async.ar.ready        := blackbox.io.axi0_arready
@@ -152,7 +151,8 @@ class PolarFireEvalKitDDR4(c : PolarFireEvalKitDDR4Params)(implicit p: Parameter
   val node: TLInwardNode =
     island.crossAXI4In(island.node) := yank.node := deint.node := indexer.node := toaxi4.node := buffer.node
 
-  lazy val module = new LazyModuleImp(this) {
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
     val io = IO(new Bundle {
       val port = new PolarFireEvalKitDDR4IO(depth)
     })
@@ -164,3 +164,19 @@ class PolarFireEvalKitDDR4(c : PolarFireEvalKitDDR4Params)(implicit p: Parameter
     island.module.reset := !io.port.CTRLR_READY
   }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

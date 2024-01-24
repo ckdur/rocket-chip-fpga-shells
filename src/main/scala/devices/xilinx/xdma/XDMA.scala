@@ -1,13 +1,12 @@
-// See LICENSE for license details.
 package sifive.fpgashells.devices.xilinx.xdma
 
 import chisel3._
 import freechips.rocketchip.amba.axi4._
-import freechips.rocketchip.config.Parameters
 import freechips.rocketchip.diplomacy._
-import freechips.rocketchip.tilelink._
 import freechips.rocketchip.interrupts._
-import freechips.rocketchip.subsystem.{CrossesToOnlyOneClockDomain, CacheBlockBytes}
+import freechips.rocketchip.subsystem.{CacheBlockBytes, CrossesToOnlyOneClockDomain}
+import freechips.rocketchip.tilelink._
+import org.chipsalliance.cde.config.Parameters
 import sifive.fpgashells.ip.xilinx.xdma._
 
 class XDMA(c: XDMAParams)(implicit p: Parameters, val crossing: ClockCrossingType = AsynchronousCrossing(8))
@@ -40,7 +39,8 @@ class XDMA(c: XDMAParams)(implicit p: Parameters, val crossing: ClockCrossingTyp
 
   val intnode: IntOutwardNode = imp.intnode
 
-  lazy val module = new LazyModuleImp(this) {
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
     val io = IO(new Bundle {
       val pads = new XDMAPads(c.lanes)
       val clocks = new XDMAClocks
@@ -50,3 +50,19 @@ class XDMA(c: XDMAParams)(implicit p: Parameters, val crossing: ClockCrossingTyp
     io.clocks <> imp.module.io.clocks
   }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

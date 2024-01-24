@@ -1,15 +1,14 @@
-// See LICENSE for license details.
 package sifive.fpgashells.shell.xilinx
 
 import chisel3._
-import freechips.rocketchip.config._
+import chisel3.experimental.dataview._
 import freechips.rocketchip.diplomacy._
-import freechips.rocketchip.tilelink._
-import freechips.rocketchip.util.SyncResetSynchronizerShiftReg
+import freechips.rocketchip.prci._
+import org.chipsalliance.cde.config._
 import sifive.fpgashells.clocks._
-import sifive.fpgashells.shell._
-import sifive.fpgashells.ip.xilinx._
 import sifive.fpgashells.devices.xilinx.xilinxarty100tmig._
+import sifive.fpgashells.ip.xilinx._
+import sifive.fpgashells.shell._
 
 class SysClockArtyPlacedOverlay(val shell: Arty100TShellBasicOverlays, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)
   extends SingleEndedClockInputXilinxPlacedOverlay(name, designInput, shellInput)
@@ -238,16 +237,12 @@ class DDRArtyPlacedOverlay(val shell: Arty100TShellBasicOverlays, name: String, 
   
   val migParams = XilinxArty100TMIGParams(address = AddressSet.misaligned(di.baseAddress, size))
   val mig = LazyModule(new XilinxArty100TMIG(migParams))
-  val ioNode = BundleBridgeSource(() => mig.module.io.cloneType)
-  val topIONode = shell { ioNode.makeSink() }
   val ddrUI     = shell { ClockSourceNode(freqMHz = 100) }
   val areset    = shell { ClockSinkNode(Seq(ClockSinkParameters())) }
   areset := di.wrangler := ddrUI
 
   def overlayOutput = DDROverlayOutput(ddr = mig.node)
   def ioFactory = new XilinxArty100TMIGPads(size)
-
-  InModuleBody { ioNode.bundle <> mig.module.io }
 
   shell { InModuleBody {
     require (shell.sys_clock.get.isDefined, "Use of DDRArtyPlacedOverlay depends on SysClockArtyPlacedOverlay")
@@ -256,15 +251,15 @@ class DDRArtyPlacedOverlay(val shell: Arty100TShellBasicOverlays, name: String, 
     val (dclk1, _) = ddrClk1.in(0)
     val (dclk2, _) = ddrClk2.in(0)
     val (ar, _) = areset.in(0)
-    val port = topIONode.bundle.port
+    val port = mig.module.io.port
     
-    io <> port
+    io <> port.viewAsSupertype(new XilinxArty100TMIGPads(mig.depth))
     ui.clock := port.ui_clk
     ui.reset := !port.mmcm_locked || port.ui_clk_sync_rst
     port.sys_clk_i := dclk1.clock.asUInt
     port.clk_ref_i := dclk2.clock.asUInt
     port.sys_rst := shell.pllReset
-    port.aresetn := !ar.reset
+    port.aresetn := !(ar.reset.asBool)
   } }
 
   shell.sdc.addGroup(clocks = Seq("clk_pll_i"), pins = Seq(mig.island.module.blackbox.io.ui_clk))
@@ -307,6 +302,7 @@ abstract class Arty100TShellBasicOverlays()(implicit p: Parameters) extends Seri
 
 class Arty100TShell()(implicit p: Parameters) extends Arty100TShellBasicOverlays
 {
+  val resetPin = InModuleBody { Wire(Bool()) }
   // PLL reset causes
   val pllReset = InModuleBody { Wire(Bool()) }
 
@@ -314,8 +310,10 @@ class Arty100TShell()(implicit p: Parameters) extends Arty100TShellBasicOverlays
 
   // Place the sys_clock at the Shell if the user didn't ask for it
   p(ClockInputOverlayKey).foreach(_.place(ClockInputDesignInput()))
+  override lazy val module = new Impl
+  class Impl extends LazyRawModuleImp(this) {
+    override def provideImplicitClockToLazyChildren = true
 
-  override lazy val module = new LazyRawModuleImp(this) {
     val reset = IO(Input(Bool()))
     xdc.addBoardPin(reset, "reset")
 
@@ -326,6 +324,8 @@ class Arty100TShell()(implicit p: Parameters) extends Arty100TShellBasicOverlays
     }
     val powerOnReset = PowerOnResetFPGAOnly(sysclk)
     sdc.addAsyncPath(Seq(powerOnReset))
+
+    resetPin := reset_ibuf.io.O
 
     pllReset :=
       (!reset_ibuf.io.O) || powerOnReset //Arty100T is active low reset
@@ -347,6 +347,7 @@ class Arty100TShellGPIOPMOD()(implicit p: Parameters) extends Arty100TShellBasic
   p(ClockInputOverlayKey).foreach(_.place(ClockInputDesignInput()))
 
   override lazy val module = new LazyRawModuleImp(this) {
+    override def provideImplicitClockToLazyChildren = true
     val reset = IO(Input(Bool()))
     xdc.addBoardPin(reset, "reset")
 
@@ -367,3 +368,19 @@ class Arty100TShellGPIOPMOD()(implicit p: Parameters) extends Arty100TShellBasic
       (!reset_ibuf.io.O) || powerOnReset || ctsReset //Arty100T is active low reset
   }
 }
+
+/*
+   Copyright 2016 SiFive, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
