@@ -6,6 +6,7 @@ import chisel3.experimental.dataview._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util._
+import freechips.rocketchip.prci._
 import org.chipsalliance.cde.config._
 import sifive.fpgashells.clocks._
 import sifive.fpgashells.ip.altera._
@@ -375,7 +376,7 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     ui.clock := port.mem_afi_clk_clk
     ui.reset := !port.mem_afi_reset_reset_n  // TODO: Get the locked also?
     port.mem_pll_ref_clk_clk := sys.clock
-    port.mem_global_reset_reset_n := !sys.reset // pllReset
+    port.mem_global_reset_reset_n := !sys.reset.asBool // pllReset
     port.mem_soft_reset_reset := sys.reset
 
     getStatus.mem_status_local_init_done := port.mem_status_local_init_done
