@@ -7,10 +7,12 @@ import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util._
 import freechips.rocketchip.prci._
+import freechips.rocketchip.subsystem.CacheBlockBytes
 import org.chipsalliance.cde.config._
 import sifive.fpgashells.clocks._
 import sifive.fpgashells.ip.lattice._
 import sifive.fpgashells.shell._
+import sifive.fpgashells.sdram._
 
 class SysClockULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)
   extends SingleEndedClockInputLatticePlacedOverlay(name, designInput, shellInput)
@@ -25,7 +27,7 @@ class SysClockULX3SPlacedOverlay(val shell: LatticeShell, name: String, val desi
   } }
 }
 
-class SysClockLatticeShellPlacer(val shell: LatticeShell, val shellInput: ClockInputShellInput)(implicit val valName: ValName)
+class SysClockULX3SShellPlacer(val shell: LatticeShell, val shellInput: ClockInputShellInput)(implicit val valName: ValName)
   extends ClockInputShellPlacer[LatticeShell] {
   def place(designInput: ClockInputDesignInput) = new SysClockULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
 }
@@ -36,7 +38,7 @@ object LEDULX3SPinConstraints{
 }
 class LEDULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: LEDDesignInput, val shellInput: LEDShellInput)
   extends LEDLatticePlacedOverlay(name, designInput, shellInput, packagePin = Some(LEDULX3SPinConstraints.pins(shellInput.number)))
-class LEDLatticeShellPlacer(val shell: LatticeShell, val shellInput: LEDShellInput)(implicit val valName: ValName)
+class LEDULX3SShellPlacer(val shell: LatticeShell, val shellInput: LEDShellInput)(implicit val valName: ValName)
   extends LEDShellPlacer[LatticeShell] {
   def place(designInput: LEDDesignInput) = new LEDULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
 }
@@ -47,7 +49,7 @@ object SwitchULX3SPinConstraints{
 }
 class SwitchULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: SwitchDesignInput, val shellInput: SwitchShellInput)
   extends SwitchLatticePlacedOverlay(name, designInput, shellInput, packagePin = Some(SwitchULX3SPinConstraints.pins(shellInput.number)))
-class SwitchLatticeShellPlacer(val shell: LatticeShell, val shellInput: SwitchShellInput)(implicit val valName: ValName)
+class SwitchULX3SShellPlacer(val shell: LatticeShell, val shellInput: SwitchShellInput)(implicit val valName: ValName)
   extends SwitchShellPlacer[LatticeShell] {
   def place(designInput: SwitchDesignInput) = new SwitchULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
 }
@@ -59,7 +61,7 @@ object ButtonULX3SPinConstraints {
 }
 class ButtonULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: ButtonDesignInput, val shellInput: ButtonShellInput)
   extends ButtonLatticePlacedOverlay(name, designInput, shellInput, packagePin = Some(ButtonULX3SPinConstraints.pins(shellInput.number)))
-class ButtonLatticeShellPlacer(val shell: LatticeShell, val shellInput: ButtonShellInput)(implicit val valName: ValName)
+class ButtonULX3SShellPlacer(val shell: LatticeShell, val shellInput: ButtonShellInput)(implicit val valName: ValName)
   extends ButtonShellPlacer[LatticeShell] {
   def place(designInput: ButtonDesignInput) = new ButtonULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
 }
@@ -102,7 +104,7 @@ class GPIOPeripheralULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3S
   } }
 }
 
-class GPIOPeripheralLatticeShellPlacer(val shell: LatticeShell, val which: ULX3SGPIOGroup, val shellInput: GPIOShellInput)(implicit val valName: ValName)
+class GPIOPeripheralULX3SShellPlacer(val shell: LatticeShell, val which: ULX3SGPIOGroup, val shellInput: GPIOShellInput)(implicit val valName: ValName)
   extends GPIOShellPlacer[LatticeShell] {
 
   def place(designInput: GPIODesignInput) = new GPIOPeripheralULX3SPlacedOverlay(shell, which, valName.name, designInput, shellInput)
@@ -126,7 +128,7 @@ class GPIO0ULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3SGPIOGroup
   } }
 }
 
-class GPIO0LatticeShellPlacer(val shell: LatticeShell, val which: ULX3SGPIOGroup, val shellInput: GPIOShellInput)(implicit val valName: ValName)
+class GPIO0ULX3SShellPlacer(val shell: LatticeShell, val which: ULX3SGPIOGroup, val shellInput: GPIOShellInput)(implicit val valName: ValName)
   extends GPIODirectLatticeShellPlacer[LatticeShell] {
 
   def place(designInput: GPIODirectLatticeDesignInput) = new GPIO0ULX3SPlacedOverlay(shell, which, valName.name, designInput, shellInput)
@@ -166,7 +168,7 @@ class SPIFlashULX3SPlacedOverlay(val shell: LatticeShell, name: String, val desi
   } }
 }
 
-class SPIFlashLatticeShellPlacer(val shell: LatticeShell, val shellInput: SPIFlashShellInput)(implicit val valName: ValName)
+class SPIFlashULX3SShellPlacer(val shell: LatticeShell, val shellInput: SPIFlashShellInput)(implicit val valName: ValName)
   extends SPIFlashShellPlacer[LatticeShell] {
 
   def place(designInput: SPIFlashDesignInput) = new SPIFlashULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
@@ -201,7 +203,7 @@ class SPIULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3SGPIOGroup, 
   } }
 }
 
-class SPILatticeShellPlacer(val shell: LatticeShell, val which: ULX3SGPIOGroup, val shellInput: SPIShellInput)(implicit val valName: ValName)
+class SPIULX3SShellPlacer(val shell: LatticeShell, val which: ULX3SGPIOGroup, val shellInput: SPIShellInput)(implicit val valName: ValName)
   extends SPIShellPlacer[LatticeShell] {
 
   def place(designInput: SPIDesignInput) = new SPIULX3SPlacedOverlay(shell, which, valName.name, designInput, shellInput)
@@ -231,7 +233,7 @@ class JTAGDebugULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3SGPIOG
   } }
 }
 
-class JTAGDebugLatticeShellPlacer(val shell: LatticeShell, val which: ULX3SGPIOGroup, val shellInput: JTAGDebugShellInput)(implicit val valName: ValName)
+class JTAGDebugULX3SShellPlacer(val shell: LatticeShell, val which: ULX3SGPIOGroup, val shellInput: JTAGDebugShellInput)(implicit val valName: ValName)
   extends JTAGDebugShellPlacer[LatticeShell] {
 
   def place(designInput: JTAGDebugDesignInput) = new JTAGDebugULX3SPlacedOverlay(shell, which, valName.name, designInput, shellInput)
@@ -269,17 +271,19 @@ class UARTULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designIn
   } }
 }
 
-class UARTLatticeShellPlacer(val shell: LatticeShell, val shellInput: UARTShellInput)(implicit val valName: ValName)
+class UARTULX3SShellPlacer(val shell: LatticeShell, val shellInput: UARTShellInput)(implicit val valName: ValName)
   extends UARTShellPlacer[LatticeShell] {
 
   def place(designInput: UARTDesignInput) = new UARTULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
 }
 
+// SD
+case object SDOverlayKey extends Field[Seq[DesignPlacer[SPIDesignInput, SPIShellInput, SPIOverlayOutput]]](Nil)
+
 object SDULX3SPinConstraints{
   val pins = Seq("H2", "K2", "J1", "J3", "H1", "K1")
 }
 
-// SD
 class SDULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: SPIDesignInput, val shellInput: SPIShellInput)
   extends SPILatticePlacedOverlay(name, designInput, shellInput)
 {
@@ -303,7 +307,7 @@ class SDULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInpu
   } }
 }
 
-class SDLatticeShellPlacer(val shell: LatticeShell, val shellInput: SPIShellInput)(implicit val valName: ValName)
+class SDULX3SShellPlacer(val shell: LatticeShell, val shellInput: SPIShellInput)(implicit val valName: ValName)
   extends SPIShellPlacer[LatticeShell] {
 
   def place(designInput: SPIDesignInput) = new SDULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
@@ -328,8 +332,16 @@ object ULX3SSDRAMLocs {
 class SDRAMULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: SDRAMDesignInput, val shellInput: SDRAMShellInput)
   extends SDRAMPlacedOverlay[ULX3SSDRAM](name, designInput, shellInput)
 {
+  val cfg = sdram_bb_cfg(
+      SDRAM_HZ = 50000000L,
+      SDRAM_DQM_W = 4,
+      SDRAM_DQ_W = 32,
+      SDRAM_READ_LATENCY = 2)
+  val mig = LazyModule(new SDRAM(SDRAMConfig(di.baseAddress, cfg), p(CacheBlockBytes)))
+  def overlayOutput = SDRAMOverlayOutput(mig.node)
   def ioFactory = new ULX3SSDRAM
   shell { InModuleBody {
+    val port = mig.port
     io.sdram_clk_o := port.sdram_clk_o
     io.sdram_cke_o := port.sdram_cke_o
     io.sdram_cs_o := port.sdram_cs_o
@@ -379,7 +391,47 @@ class SDRAMULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designI
   } }
 }
 
-class SDRAMLatticeShellPlacer(val shell: LatticeShell, val shellInput: SDRAMShellInput)(implicit val valName: ValName)
+class SDRAMULX3SShellPlacer(val shell: LatticeShell, val shellInput: SDRAMShellInput)(implicit val valName: ValName)
   extends SDRAMShellPlacer[LatticeShell] {
   def place(designInput: SDRAMDesignInput) = new SDRAMULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
+}
+
+abstract class ULX3SShell()(implicit p: Parameters) extends LatticeShell
+{
+  val pllFactory = new PLLFactory(this, 4, p => Module(new ecp5pllCompat(p)))
+  override def designParameters = super.designParameters.alterPartial {
+    case PLLFactoryKey => pllFactory
+  }
+
+  val pllReset = InModuleBody { Wire(Bool()) }
+  val resetPin = InModuleBody { Wire(Bool()) }
+  val ndreset = InModuleBody { WireInit(false.B) }
+  val topDesign = LazyModule(p(DesignKey)(designParameters))
+
+  val sys_clock = Overlay(ClockInputOverlayKey, new SysClockULX3SShellPlacer(this, ClockInputShellInput()))
+  val led       = Seq.tabulate(8)(i => Overlay(LEDOverlayKey, new LEDULX3SShellPlacer(this, LEDShellInput(color = "green", number = i))(valName = ValName(s"led_$i"))))
+  val switch    = Seq.tabulate(4)(i => Overlay(SwitchOverlayKey, new SwitchULX3SShellPlacer(this, SwitchShellInput(number = i))(valName = ValName(s"switch_$i"))))
+  val button    = Seq.tabulate(6)(i => Overlay(ButtonOverlayKey, new ButtonULX3SShellPlacer(this, ButtonShellInput(number = i))(valName = ValName(s"button_$i"))))
+  val uart      = Overlay(UARTOverlayKey, new UARTULX3SShellPlacer(this, UARTShellInput()))
+  val sd        = Overlay(SDOverlayKey, new SDULX3SShellPlacer(this, SPIShellInput()))
+  val jtagseq   = Seq(0 -> 0, 1 -> 0, 2 -> 0, 3 -> 0, 4 -> 0)
+  val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugULX3SShellPlacer(this, ULX3SGPIOGroup(jtagseq), JTAGDebugShellInput()))
+  val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashULX3SShellPlacer(this, SPIFlashShellInput())(ValName(s"qspi")))
+  val gpioseq   = Seq.tabulate(27 - 5)(i => (i + 5) -> 0) ++ Seq.tabulate(27)(i => i -> 1)
+  val gpio      = Overlay(GPIOOverlayKey, new GPIOPeripheralULX3SShellPlacer(this, ULX3SGPIOGroup(gpioseq), GPIOShellInput()))
+  val sdram     = Overlay(SDRAMOverlayKey, new SDRAMULX3SShellPlacer(this, SDRAMShellInput()))
+
+  // Place the sys_clock at the Shell if the user didn't ask for it
+  p(ClockInputOverlayKey).foreach(_.place(ClockInputDesignInput()))
+  override lazy val module = new ULX3SShellImpl(this)
+}
+
+class ULX3SShellImpl(outer: ULX3SShell) extends LazyRawModuleImp(outer) {
+  val reset = IO(Analog(1.W))
+  outer.lpf.addPackagePin(IOPin(reset), "D6")
+  outer.lpf.addIOBUF(IOPin(reset), drive=Some(4))
+  val reset_ibuf = Module(new BB)
+  attach(reset_ibuf.io.B, reset)
+  outer.resetPin := !reset_ibuf.asInput() || outer.ndreset
+  outer.pllReset := outer.resetPin
 }

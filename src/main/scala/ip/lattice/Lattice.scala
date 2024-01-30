@@ -4,6 +4,9 @@ import chisel3._
 import chisel3.experimental._
 import chisel3.util.HasBlackBoxInline
 import sifive.blocks.devices.pinctrl._
+import sifive.fpgashells.clocks._
+
+import scala.math.BigDecimal.double2bigDecimal
 
 class BB extends BlackBox{
   val io = IO(new Bundle{
@@ -307,7 +310,7 @@ object ecp5pll {
     }
     phase_count_x8
   }
-  def apply(cfg: ecp5pllConfig): ecp5pll = {
+  def getMapParams(cfg: ecp5pllConfig): Map[String, Param] = {
     import cfg._
     val (params_refclk_div, params_feedback_div, params_output_div) = F_ecp5pll(cfg)
     val params_fout = in_hz * params_feedback_div / params_refclk_div
@@ -340,7 +343,7 @@ object ecp5pll {
     require(!error_out2_hz, s"out2_hz (${out2_hz}) tolerance exceeds out2_tol_hz (${out2_tol_hz})")
     require(!error_out3_hz, s"out3_hz (${out3_hz}) tolerance exceeds out3_tol_hz (${out3_tol_hz})")
 
-    val params = Map(
+    Map(
       "CLKI_DIV" -> IntParam(params_refclk_div),
       "CLKFB_DIV" -> IntParam(params_feedback_div),
       "FEEDBK_PATH" -> StringParam("CLKOP"),
@@ -375,8 +378,110 @@ object ecp5pll {
       "DPHASE_SOURCE" -> StringParam(if(dynamic_en) "ENABLED" else "DISABLED"),
       "PLL_LOCK_MODE" -> IntParam(0)
     )
-    Module(new ecp5pll(params, cfg))
   }
+  def apply(cfg: ecp5pllConfig): ecp5pll = {
+    Module(new ecp5pll(getMapParams(cfg), cfg))
+  }
+  def apply(c: PLLParameters): ecp5pll = {
+    val cfg = ecp5pllConfig(
+      in_hz = (c.input.freqMHz * 1000000).toBigInt,
+      out0_hz = if(c.req.size >= 1) (c.req(0).freqMHz * 1000000).toBigInt else 0,
+      out0_deg = if(c.req.size >= 1) c.req(0).phaseDeg.toBigInt else 0,
+      out0_tol_hz = 0,
+      out1_hz = if(c.req.size >= 2) (c.req(1).freqMHz * 1000000).toBigInt else 0,
+      out1_deg = if(c.req.size >= 2) c.req(1).phaseDeg.toBigInt else 0,
+      out1_tol_hz = 0,
+      out2_hz = if(c.req.size >= 3) (c.req(2).freqMHz * 1000000).toBigInt else 0,
+      out2_deg = if(c.req.size >= 3) c.req(2).phaseDeg.toBigInt else 0,
+      out2_tol_hz = 0,
+      out3_hz = if(c.req.size >= 4) (c.req(3).freqMHz * 1000000).toBigInt else 0,
+      out3_deg = if(c.req.size >= 4) c.req(3).phaseDeg.toBigInt else 0,
+      out3_tol_hz = 0,
+      reset_en = false,
+      standby_en = false,
+      dynamic_en = false
+    )
+    apply(cfg)
+  }
+}
+
+class ecp5pllCompat(c: PLLParameters) extends Module with PLLInstance {
+  val io = IO(new Bundle {
+    val clk_o = Vec(c.req.size, Output(Clock()))
+    val standby = Input(Bool())
+    val phasesel = Input(UInt(2.W))
+    val phasedir = Input(Bool())
+    val phasestep = Input(Bool())
+    val phaseloadreg = Input(Bool())
+    val locked = Output(Bool())
+  })
+  val m = ecp5pll(c)
+  m.io.standby := io.standby
+  m.io.phasesel := io.phasesel
+  m.io.phasedir := io.phasedir
+  m.io.phasestep := io.phasestep
+  m.io.phaseloadreg := io.phaseloadreg
+  io.locked := m.io.locked
+  (io.clk_o zip m.io.clk_o).foreach { case (clko, mclko) =>
+    clko := mclko
+  }
+  override def desiredName = c.name
+  def getClocks: Seq[Clock] = io.clk_o
+  def getInput = clock
+  def getReset = Some(reset.asBool)
+  def getLocked = io.locked
+  def getClockNames = Seq(
+    s"${c.name}.m.bb.CLKOPA",
+    s"${c.name}.m.bb.CLKOS",
+    s"${c.name}.m.bb.CLKOS2",
+    s"${c.name}.m.bb.CLKOS3"
+  ).take(c.req.size)
+  def tieoffextra = {
+    io.standby := false.B
+    io.phasesel := 0.U
+    io.phasedir := false.B
+    io.phasestep := false.B
+    io.phaseloadreg := false.B
+  }
+}
+
+// This is a FPGA-Only construct, which uses
+// 'initial' constructions
+class PowerOnResetLatticeFPGAOnly extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val aresetn = Input(Bool())
+    val clock = Input(Clock())
+    val power_on_reset = Output(Bool())
+  })
+
+  setInline(s"PowerOnResetLatticeFPGAOnly.v",
+    s"""(* keep_hierarchy = "yes" *)
+       |module PowerOnResetLatticeFPGAOnly(
+       |  input wire aresetn,
+       |  input wire clock,
+       |  output wire power_on_reset
+       |);
+       |  (* dont_touch = "true" *) reg por = 1'b0;
+       |  initial begin
+       |    por <= 1'b0;
+       |  end
+       |  always @(posedge clock) begin
+       |    por <= aresetn;
+       |  end
+       |  assign power_on_reset = !por;
+       |endmodule
+       |""".stripMargin)
+}
+
+object PowerOnResetLatticeFPGAOnly {
+  def apply (clk: Clock, name: String, areset: Bool): Bool = {
+    val por = Module(new PowerOnResetLatticeFPGAOnly())
+    por.suggestName(name)
+    por.io.aresetn := ~areset
+    por.io.clock := clk
+    por.io.power_on_reset
+  }
+  def apply (clk: Clock, areset: Bool): Bool = apply(clk, "fpga_power_on", areset)
 }
 
 class ULX3SSDRAM extends Bundle {

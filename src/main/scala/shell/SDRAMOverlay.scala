@@ -46,8 +46,12 @@ trait HasSDRAMIf{
 class SDRAMIf(val cfg: sdram_bb_cfg = sdram_bb_cfg()) extends Bundle with HasSDRAMIf
 
 case class SDRAMShellInput()
-case class SDRAMDesignInput(cfg: sdram_bb_cfg)(implicit val p: Parameters)
-case class SDRAMOverlayOutput(port: ModuleValue[SDRAMIf])
+case class SDRAMDesignInput
+(
+  baseAddress: BigInt,
+  wrangler: ClockAdapterNode,
+  corePLL: PLLNode)(implicit val p: Parameters)
+case class SDRAMOverlayOutput(sdram: TLInwardNode)
 trait SDRAMShellPlacer[Shell] extends ShellPlacer[SDRAMDesignInput, SDRAMShellInput, SDRAMOverlayOutput]
 
 case object SDRAMOverlayKey extends Field[Seq[DesignPlacer[SDRAMDesignInput, SDRAMShellInput, SDRAMOverlayOutput]]](Nil)
@@ -56,6 +60,4 @@ abstract class SDRAMPlacedOverlay[IO <: Data](val name: String, val di: SDRAMDes
   extends IOPlacedOverlay[IO, SDRAMDesignInput, SDRAMShellInput, SDRAMOverlayOutput]
 {
   implicit val p = di.p
-  val port = shell { InModuleBody { Wire(new SDRAMIf(di.cfg)) } }
-  def overlayOutput = SDRAMOverlayOutput(port)
 }
