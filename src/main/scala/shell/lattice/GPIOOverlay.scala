@@ -19,6 +19,7 @@ abstract class GPIOLatticePlacedOverlay
       m.io.I := tlpin.o.oval
       m.io.T := !tlpin.o.oe
       tlpin.i.ival := m.io.O
+      tlpin.i.po.foreach(_ := false.B)
       // m.fromBase(tlpin.toBasePin()) // This doesn't work
       attach(m.io.B, io.gpio(idx))
     } }

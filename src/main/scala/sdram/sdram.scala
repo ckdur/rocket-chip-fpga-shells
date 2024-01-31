@@ -190,7 +190,7 @@ case class SDRAMAttachParams
     val name = s"sdram_${SDRAMObject.nextId()}"
     val tlbus = where.locateTLBusWrapper(MBUS)
     val sdramClockDomainWrapper = LazyModule(new ClockSinkDomain(take = None))
-    val sdram = sdramClockDomainWrapper { LazyModule(new SDRAM(device, tlbus.blockBytes, tlbus.beatBytes)) }
+    val sdram = sdramClockDomainWrapper { LazyModule(new SDRAM(device, tlbus.blockBytes)) }
     sdram.suggestName(name)
 
     tlbus.coupleTo(s"mem_${name}") { bus =>
@@ -206,7 +206,7 @@ case class SDRAMAttachParams
           sdramClockDomainWrapper.clockNode := sdramClockGroup
       })
 
-      sdram.controlXing(controlXType) := bus
+      sdram.controlXing(controlXType) := TLWidthWidget(tlbus.beatBytes) := bus
     }
 
     sdram

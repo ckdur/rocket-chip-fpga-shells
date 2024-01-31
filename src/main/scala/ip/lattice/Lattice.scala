@@ -405,8 +405,10 @@ object ecp5pll {
   }
 }
 
-class ecp5pllCompat(c: PLLParameters) extends Module with PLLInstance {
+class ecp5pllCompat(c: PLLParameters) extends RawModule with PLLInstance {
   val io = IO(new Bundle {
+    val clock = Input(Clock())
+    val reset = Input(Bool())
     val clk_o = Vec(c.req.size, Output(Clock()))
     val standby = Input(Bool())
     val phasesel = Input(UInt(2.W))
@@ -415,7 +417,7 @@ class ecp5pllCompat(c: PLLParameters) extends Module with PLLInstance {
     val phaseloadreg = Input(Bool())
     val locked = Output(Bool())
   })
-  val m = ecp5pll(c)
+  val m = withClockAndReset(io.clock, io.reset){ecp5pll(c)}
   m.io.standby := io.standby
   m.io.phasesel := io.phasesel
   m.io.phasedir := io.phasedir
@@ -427,8 +429,8 @@ class ecp5pllCompat(c: PLLParameters) extends Module with PLLInstance {
   }
   override def desiredName = c.name
   def getClocks: Seq[Clock] = io.clk_o
-  def getInput = clock
-  def getReset = Some(reset.asBool)
+  def getInput = io.clock
+  def getReset = Some(io.reset)
   def getLocked = io.locked
   def getClockNames = Seq(
     s"${c.name}.m.bb.CLKOPA",

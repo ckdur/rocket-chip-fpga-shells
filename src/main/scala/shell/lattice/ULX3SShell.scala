@@ -9,6 +9,7 @@ import freechips.rocketchip.util._
 import freechips.rocketchip.prci._
 import freechips.rocketchip.subsystem.CacheBlockBytes
 import org.chipsalliance.cde.config._
+import sifive.blocks.devices.gpio.PeripheryGPIOKey
 import sifive.fpgashells.clocks._
 import sifive.fpgashells.ip.lattice._
 import sifive.fpgashells.shell._
@@ -90,7 +91,7 @@ class GPIOPeripheralULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3S
   extends GPIOLatticePlacedOverlay(name, designInput, shellInput)
 {
   shell { InModuleBody {
-    require(io.gpio.length == which.elem.length)
+    require(io.gpio.length == which.elem.length, s"GPIO do not match: request=${io.gpio.length}, avail=${which.elem.length}")
     val packagePinsWithPackageIOs = io.gpio.zip(which.elem).map {
       case (io, (i, j)) =>
         (GPIOULX3SPinConstraints.gp(i)(j), IOPin(io))
@@ -338,10 +339,11 @@ class SDRAMULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designI
       SDRAM_DQ_W = 32,
       SDRAM_READ_LATENCY = 2)
   val mig = LazyModule(new SDRAM(SDRAMConfig(di.baseAddress, cfg), p(CacheBlockBytes)))
-  def overlayOutput = SDRAMOverlayOutput(mig.node)
+  val sinkio = mig.ioNode.makeSink()
+  def overlayOutput = SDRAMOverlayOutput(mig.controlXing(AsynchronousCrossing()))
   def ioFactory = new ULX3SSDRAM
   shell { InModuleBody {
-    val port = mig.port
+    val port = sinkio.bundle
     io.sdram_clk_o := port.sdram_clk_o
     io.sdram_cke_o := port.sdram_cke_o
     io.sdram_cs_o := port.sdram_cs_o
@@ -370,7 +372,7 @@ class SDRAMULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designI
     }
     ULX3SSDRAMLocs.mem_data.zipWithIndex.foreach { case (pin, i) =>
       shell.lpf.addPackagePin(IOPin(io.sdram_data_io(i)), pin)
-      shell.lpf.addIOBUF(IOPin(io.sdram_data_io(i), i), drive=Some(4))
+      shell.lpf.addIOBUF(IOPin(io.sdram_data_io(i)), drive=Some(4))
     }
     ULX3SSDRAMLocs.mem_ba.zipWithIndex.foreach { case (pin, i) =>
       shell.lpf.addPackagePin(IOPin(io.sdram_ba_o, i), pin)
@@ -417,7 +419,8 @@ abstract class ULX3SShell()(implicit p: Parameters) extends LatticeShell
   val jtagseq   = Seq(0 -> 0, 1 -> 0, 2 -> 0, 3 -> 0, 4 -> 0)
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugULX3SShellPlacer(this, ULX3SGPIOGroup(jtagseq), JTAGDebugShellInput()))
   val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashULX3SShellPlacer(this, SPIFlashShellInput())(ValName(s"qspi")))
-  val gpioseq   = Seq.tabulate(27 - 5)(i => (i + 5) -> 0) ++ Seq.tabulate(27)(i => i -> 1)
+  val gpioseqall = Seq.tabulate(27 - 5)(i => (i + 5) -> 0) ++ Seq.tabulate(27)(i => i -> 1)
+  val gpioseq   = gpioseqall.take(p(PeripheryGPIOKey).head.width)
   val gpio      = Overlay(GPIOOverlayKey, new GPIOPeripheralULX3SShellPlacer(this, ULX3SGPIOGroup(gpioseq), GPIOShellInput()))
   val sdram     = Overlay(SDRAMOverlayKey, new SDRAMULX3SShellPlacer(this, SDRAMShellInput()))
 
