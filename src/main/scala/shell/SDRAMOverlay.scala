@@ -24,6 +24,7 @@ case class sdram_bb_cfg
   val SDRAM_REFRESH_CNT = 1 << SDRAM_ROW_W
   val SDRAM_START_DELAY = 100000 / (1000 / SDRAM_MHZ) // 100 uS
   val SDRAM_REFRESH_CYCLES = (64000*SDRAM_MHZ) / SDRAM_REFRESH_CNT-1
+  val size: BigInt = (1 << SDRAM_ADDR_W) * SDRAM_DQ_W / 8
 }
 
 trait HasSDRAMIf{

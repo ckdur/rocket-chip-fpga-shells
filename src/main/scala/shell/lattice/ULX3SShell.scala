@@ -25,6 +25,7 @@ class SysClockULX3SPlacedOverlay(val shell: LatticeShell, name: String, val desi
     val clk: Clock = io
     shell.lpf.addPackagePin(clk, "G2")
     shell.lpf.addIOBUF(clk, drive=Some(4))
+    shell.lpf.addClock(clk, bank_freq)
   } }
 }
 
@@ -216,6 +217,7 @@ class JTAGDebugULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3SGPIOG
 {
   shell { InModuleBody {
     shell.sdc.addClock("JTCK", IOPin(io.jtag_TCK), 10)
+    shell.lpf.addClock(IOPin(io.jtag_TCK), 10.0)
     val iopins = Seq(IOPin(io.jtag_TDI),
       IOPin(io.jtag_TDO),
       IOPin(io.jtag_TCK),
@@ -330,15 +332,17 @@ object ULX3SSDRAMLocs {
   val mem_cas = "T19"
 }
 
+case object ULX3SSDRAMCfg extends Field[sdram_bb_cfg](sdram_bb_cfg(
+  SDRAM_HZ = 50000000L,
+  SDRAM_DQM_W = 4,
+  SDRAM_DQ_W = 32,
+  SDRAM_READ_LATENCY = 2)) // 4GB
+
 class SDRAMULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: SDRAMDesignInput, val shellInput: SDRAMShellInput)
   extends SDRAMPlacedOverlay[ULX3SSDRAM](name, designInput, shellInput)
 {
-  val cfg = sdram_bb_cfg(
-      SDRAM_HZ = 50000000L,
-      SDRAM_DQM_W = 4,
-      SDRAM_DQ_W = 32,
-      SDRAM_READ_LATENCY = 2)
-  val mig = LazyModule(new SDRAM(SDRAMConfig(di.baseAddress, cfg), p(CacheBlockBytes)))
+  val cfg = p(ULX3SSDRAMCfg)
+  val mig = LazyModule(new SDRAM(SDRAMConfig(di.baseAddress, cfg)))
   val sinkio = mig.ioNode.makeSink()
   def overlayOutput = SDRAMOverlayOutput(mig.controlXing(AsynchronousCrossing()))
   def ioFactory = new ULX3SSDRAM

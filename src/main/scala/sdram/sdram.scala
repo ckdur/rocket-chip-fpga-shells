@@ -58,12 +58,12 @@ case class SDRAMConfig // Periphery Config
   address: BigInt,
   sdcfg: sdram_bb_cfg = sdram_bb_cfg()
 ) {
-  val size: BigInt = (1 << sdcfg.SDRAM_ADDR_W) * sdcfg.SDRAM_DQ_W / 8
+  val size: BigInt = sdcfg.size
   //0x2000000L, // 32Mb (256Mbits)
   //0x4000000L, // 64Mb (512Mbits)
 }
 
-class SDRAM(cfg: SDRAMConfig, blockBytes: Int)(implicit p: Parameters) extends LazyModule with HasClockDomainCrossing{
+class SDRAM(cfg: SDRAMConfig)(implicit p: Parameters) extends LazyModule with HasClockDomainCrossing{
 
   val device = new MemoryDevice
   val tlcfg = TLSlaveParameters.v1(
@@ -84,16 +84,14 @@ class SDRAM(cfg: SDRAMConfig, blockBytes: Int)(implicit p: Parameters) extends L
 
   // Create the IO node, and stop trying to get something from elsewhere
   val ioNode = BundleBridgeSource(() => (new SDRAMIf(cfg.sdcfg)).cloneType)
-  val port = InModuleBody { ioNode.bundle }
 
   // Connections of the node
-  val node: TLInwardNode =
-    sdramnode := TLFragmenter(4, blockBytes) := TLBuffer()
-
+  val node: TLInwardNode = sdramnode := TLBuffer()
   val controlXing: TLInwardClockCrossingHelper = this.crossIn(node)
 
   lazy val module = new LazyModuleImp(this) {
     val sdramimp = Module(new sdram(cfg.sdcfg))
+    val port = ioNode.bundle
 
     // Clock and Reset
     sdramimp.io.clk_i := clock
@@ -126,8 +124,8 @@ class SDRAM(cfg: SDRAMConfig, blockBytes: Int)(implicit p: Parameters) extends L
 
     // d_full logic: It is full if there is 1 transaction not completed
     // this is, of course, waiting until D responses for every individual A transaction
-    when (tl_in.d.fire()) { d_full := false.B }
-    when (tl_in.a.fire() && !sdramimp.io.stall_o) { d_full := true.B }
+    when (tl_in.d.fire) { d_full := false.B }
+    when (tl_in.a.fire && !sdramimp.io.stall_o) { d_full := true.B }
 
     // The D valid is the WB ack and the valid held (if D not ready yet)
     tl_in.d.valid := d_valid_held
@@ -135,7 +133,7 @@ class SDRAM(cfg: SDRAMConfig, blockBytes: Int)(implicit p: Parameters) extends L
     // If we use fire for the "false" latch, it lasts at least 1 cycle
     val ack = (sdramimp.io.ack_o)
     when(ack) { d_valid_held := true.B }
-    when(tl_in.d.fire()) { d_valid_held := false.B }
+    when(tl_in.d.fire) { d_valid_held := false.B }
 
     // The A ready should be 1 only if there is no transaction
     tl_in.a.ready := !d_full && !sdramimp.io.stall_o
@@ -147,7 +145,7 @@ class SDRAM(cfg: SDRAMConfig, blockBytes: Int)(implicit p: Parameters) extends L
     val d_data = RegEnable(sdramimp.io.data_o, ack)
 
     // Save the size and the source from the A channel for the D channel
-    when (tl_in.a.fire()) {
+    when (tl_in.a.fire) {
       d_size   := tl_in.a.bits.size
       d_source := tl_in.a.bits.source
       d_hasData := hasData
@@ -190,7 +188,7 @@ case class SDRAMAttachParams
     val name = s"sdram_${SDRAMObject.nextId()}"
     val tlbus = where.locateTLBusWrapper(MBUS)
     val sdramClockDomainWrapper = LazyModule(new ClockSinkDomain(take = None))
-    val sdram = sdramClockDomainWrapper { LazyModule(new SDRAM(device, tlbus.blockBytes)) }
+    val sdram = sdramClockDomainWrapper { LazyModule(new SDRAM(device)) }
     sdram.suggestName(name)
 
     tlbus.coupleTo(s"mem_${name}") { bus =>
@@ -206,7 +204,7 @@ case class SDRAMAttachParams
           sdramClockDomainWrapper.clockNode := sdramClockGroup
       })
 
-      sdram.controlXing(controlXType) := TLWidthWidget(tlbus.beatBytes) := bus
+      sdram.controlXing(controlXType) := TLFragmenter(4, tlbus.blockBytes) := TLWidthWidget(tlbus.beatBytes) := bus
     }
 
     sdram
