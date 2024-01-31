@@ -511,11 +511,11 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
   val uart      = Overlay(UARTOverlayKey, new UARTTR4ShellPlacer(this, TR4GPIOGroup(uartseq), UARTShellInput()))
   val spiseq    = Seq( Seq(1 ->  6, 1 ->  7, 1 ->  4, 1 ->  5))
   val spi       = spiseq.zipWithIndex.map{case (s, i) => Overlay(SPIOverlayKey, new SPITR4ShellPlacer(this, TR4GPIOGroup(s), SPIShellInput(i))(ValName(s"spi_${i}")))}
-  val jtagseq   = Seq(1 ->  0, 1 ->  1, 1 ->  2, 1 ->  3, 0 -> 34)
+  val jtagseq   = Seq(1 ->  0, 1 ->  1, 1 ->  2, 1 ->  3, 1 -> 24)
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugTR4ShellPlacer(this, TR4GPIOGroup(jtagseq), JTAGDebugShellInput()))
   val qspiseq   = Seq(1 -> 20, 1 -> 21, 1 -> 18, 1 -> 19)
   val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashTR4ShellPlacer(this, TR4GPIOGroup(qspiseq), SPIFlashShellInput())(ValName(s"qspi")))
-  val gpioseq   = Seq(1 -> 24, 1 -> 25, 1 -> 26, 1 -> 27)
+  val gpioseq   = Seq(1 -> 25, 1 -> 26, 1 -> 27)
   val gpio      = Overlay(GPIOOverlayKey, new GPIOPeripheralTR4ShellPlacer(this, TR4GPIOGroup(gpioseq), GPIOShellInput()))
   val hsmc      = Seq(
     Overlay(AlteraHSMCOverlayKey, new AlteraHSMCTR4ShellPlacer(this, new TR4HSMCA, AlteraHSMCShellInput("A"))(ValName("HSMC_A"))),
