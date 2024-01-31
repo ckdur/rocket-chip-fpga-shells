@@ -200,7 +200,7 @@ class ecp5pll(params: Map[String, Param], cfg: ecp5pllConfig) extends Module {
   })
   val PHASESEL_HW = WireInit(io.phasesel - 1.U(2.W))
   val bb = Module(new WRAP_EHXPLLL(params, cfg))
-  bb.io.RST := false.B
+  bb.io.RST := reset.asBool
   bb.io.STDBY := false.B
   bb.io.CLKI := clock
   io.clk_o(0) := bb.io.CLKOPA
