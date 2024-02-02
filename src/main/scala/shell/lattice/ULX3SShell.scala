@@ -336,7 +336,7 @@ case object ULX3SSDRAMCfg extends Field[sdram_bb_cfg](sdram_bb_cfg(
   SDRAM_HZ = 50000000L,
   SDRAM_DQM_W = 2,
   SDRAM_DQ_W = 16,
-  SDRAM_READ_LATENCY = 2)) // 4GB
+  SDRAM_READ_LATENCY = 3)) // 4GB
 
 class SDRAMULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: SDRAMDesignInput, val shellInput: SDRAMShellInput)
   extends SDRAMPlacedOverlay[ULX3SSDRAM](name, designInput, shellInput)

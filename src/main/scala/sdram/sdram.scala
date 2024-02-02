@@ -86,7 +86,7 @@ class SDRAM(cfg: SDRAMConfig)(implicit p: Parameters) extends LazyModule with Ha
   val ioNode = BundleBridgeSource(() => (new SDRAMIf(cfg.sdcfg)).cloneType)
 
   // Connections of the node
-  val node: TLInwardNode = sdramnode := TLBuffer()
+  val node: TLInwardNode = sdramnode
   val controlXing: TLInwardClockCrossingHelper = this.crossIn(node)
 
   lazy val module = new LazyModuleImp(this) {
