@@ -434,11 +434,11 @@ abstract class ULX3SShell()(implicit p: Parameters) extends LatticeShell
 }
 
 class ULX3SShellImpl(outer: ULX3SShell) extends LazyRawModuleImp(outer) {
-  val reset = IO(Analog(1.W))
-  outer.lpf.addPackagePin(IOPin(reset), "D6")
-  outer.lpf.addIOBUF(IOPin(reset), drive=Some(4))
+  val reset_n = IO(Analog(1.W))
+  outer.lpf.addPackagePin(IOPin(reset_n), "D6")
+  outer.lpf.addIOBUF(IOPin(reset_n), drive=Some(4))
   val reset_ibuf = Module(new BB)
-  attach(reset_ibuf.io.B, reset)
+  attach(reset_ibuf.io.B, reset_n)
   outer.resetPin := !reset_ibuf.asInput() || outer.ndreset
   outer.pllReset := outer.resetPin
 }

@@ -84,7 +84,7 @@ case class ecp5pllConfig
   out3_hz: BigInt = 0,
   out3_deg: BigInt = 0,
   out3_tol_hz: BigInt = 0,
-  reset_en: Boolean = false,
+  reset_en: Boolean = true,
   standby_en: Boolean = false,
   dynamic_en: Boolean = false
 )
@@ -404,7 +404,7 @@ object ecp5pll {
       out3_hz = if(c.req.size >= 4) (c.req(3).freqMHz * 1000000).toBigInt else 0,
       out3_deg = if(c.req.size >= 4) c.req(3).phaseDeg.toBigInt else 0,
       out3_tol_hz = 0,
-      reset_en = false,
+      reset_en = true,
       standby_en = false,
       dynamic_en = false
     )
