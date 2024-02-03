@@ -284,7 +284,7 @@ class UARTULX3SShellPlacer(val shell: LatticeShell, val shellInput: UARTShellInp
 case object SDOverlayKey extends Field[Seq[DesignPlacer[SPIDesignInput, SPIShellInput, SPIOverlayOutput]]](Nil)
 
 object SDULX3SPinConstraints{
-  val pins = Seq("H2", "K2", "J1", "J3", "H1", "K1")
+  val pins = Seq("H2", "K2", "J1", "J3", "H1", "K1", "P5", "N5")
 }
 
 class SDULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: SPIDesignInput, val shellInput: SPIShellInput)
@@ -296,7 +296,9 @@ class SDULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInpu
       IOPin(io.spi_dat(0)),
       IOPin(io.spi_dat(1)),
       IOPin(io.spi_dat(2)),
-      IOPin(io.spi_dat(3)))
+      IOPin(io.spi_dat(3)),
+      IOPin(io.spi_wp),
+      IOPin(io.spi_cdn))
     val packagePinsWithPackageIOs = iopins.zip(SDULX3SPinConstraints.pins).map {
       case (io, pins) =>
         (pins, io)
