@@ -521,7 +521,7 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
     Overlay(AlteraHSMCOverlayKey, new AlteraHSMCTR4ShellPlacer(this, new TR4HSMCA, AlteraHSMCShellInput("A"))(ValName("HSMC_A"))),
     Overlay(AlteraHSMCOverlayKey, new AlteraHSMCTR4ShellPlacer(this, new TR4HSMCB, AlteraHSMCShellInput("B"))(ValName("HSMC_B")))
   )
-  val gpio0seq  = Seq.tabulate(36)(i => 0 -> i)
+  val gpio0seq  = Seq.tabulate(34)(i => 0 -> i)
   val gpio0     = Overlay(GPIO0OverlayKey, new GPIO0TR4ShellPlacer(this, TR4GPIOGroup(gpio0seq), GPIOShellInput()))
   val ddr       = Overlay(DDROverlayKey, new DDRTR4ShellPlacer(this, DDRShellInput()))
 
