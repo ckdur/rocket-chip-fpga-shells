@@ -8,27 +8,30 @@ import sifive.fpgashells.clocks._
 import sifive.fpgashells.ip.altera._
 import sifive.fpgashells.shell._
 
-class AlteraShellTcl(val name: String)
+class IO_TCL(val name: String)
 {
   private var constraints: Seq[() => String] = Nil
   protected def addConstraint(command: => String) { constraints = (() => command) +: constraints }
   ElaborationArtefacts.add(name, constraints.map(_()).reverse.mkString("\n") + "\n")
 
   def addPackagePin(io: IOPin, pin: String) {
-    addConstraint(s"set_location_assignment ${pin} -to ${io.name}")
+    addConstraint(s"set_location_assignment {${pin}} -to ${io.name}")
   }
   def addIOStandard(io: IOPin, standard: String) {
-    addConstraint(s"set_instance_assignment -name IO_STANDARD \"${standard}\" -to ${io.name}")
+    addConstraint(s"set_instance_assignment -name IO_STANDARD {${standard}} -to ${io.name}")
   }
   def addPullup(io: IOPin) {
     addConstraint(s"set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to ${io.name}")
   }
+  // def addSlew(io: IOPin, speed: String) {
+  //   addConstraint(s"set_property SLEW {${speed}} ${io.sdcPin}")
+  // }
   def addTermination(io: IOPin, kind: String) {
     if(io.isInput) addConstraint(s"set_instance_assignment -name INPUT_TERMINATION \"PARALLEL ${kind}\" -to ${io.name}")
     if(io.isOutput) addConstraint(s"set_instance_assignment -name OUTPUT_TERMINATION \"SERIES ${kind}\" -to ${io.name}")
   }
-  def addDriveStrength(io: IOPin, drive: String): Unit = {
-    addConstraint(s"set_instance_assignment -name CURRENT_STRENGTH_NEW \"${drive}\" -to ${io.name}")
+  def addDriveStrength(io: IOPin, drive: String) {
+    addConstraint(s"set_instance_assignment -name CURRENT_STRENGTH_NEW {${drive}} -to ${io.name}")
   }
   def addGroup(from: IOPin, to: IOPin, group: String): Unit = {
     addConstraint(s"set_instance_assignment -name DQ_GROUP ${group} -from ${from.name} -to ${to.name}")
@@ -38,42 +41,36 @@ class AlteraShellTcl(val name: String)
   }
 }
 
-class AlteraSDC(name: String) extends SDC(name) {
-  // A version of the SDC but for Quartus, as SDC quartus does not support some stuff
-  override def addClock(name: => String, pin: => IOPin, freqMHz: => Double, jitterNs: => Double = 0.5) {
-    addRawClock(s"create_clock -name ${name} -period ${1000 / freqMHz} ${pin.sdcPin}")
-    // addRawClock(s"set_input_jitter ${name} ${jitterNs}") // Not supported
-  }
-
-  override def addGroup(clocks: => Seq[String] = Nil, pins: => Seq[IOPin] = Nil): Unit = {
-    // Unimplemented
-  }
-
-  def addGeneratedClock(name: => String, pinin: => IOPin, opath: String, ratio: Rational, phaseDeg: => Double = 0.0): Unit = {
-    // TODO: This can be addDerivedClock() but if supported by multiply
-    addRawClock(s"create_generated_clock -add -name \"${name}\" -source ${pinin.sdcPin} -multiply_by ${ratio.num} -divide_by ${ratio.den} -phase ${phaseDeg} ${opath}")
-  }
-
-  def addGroupOnlyNames(clocks: => Seq[String] = Nil, pins: => Seq[IOPin] = Nil) {
-    def thunk = {
-      val clocksList = clocks
-      val (pinsList, portsList) = pins.map(_.name.replace('/', '|')).partition(_.contains("|"))
-      val sep = " \\\n      "
-      val clocksStr = (" [get_clocks " +: clocksList).mkString(sep) + " \\\n    ]"
-      val pinsStr   = (" [get_clocks -of_objects [get_pins {"  +: pinsList ).mkString(sep) + " \\\n    }]]"
-      val portsStr  = (" [get_clocks -of_objects [get_ports {" +: portsList).mkString(sep) + " \\\n    }]]"
-      val str = s"  -group [list${if (clocksList.isEmpty) "" else clocksStr}${if (pinsList.isEmpty) "" else pinsStr}${if (portsList.isEmpty) "" else portsStr}]"
-      if (clocksList.isEmpty && pinsList.isEmpty && portsList.isEmpty) "" else str
-    }
-    addRawGroup(thunk)
-  }
-}
-
 abstract class AlteraShell()(implicit p: Parameters) extends IOShell
 {
   val sdc = new AlteraSDC("shell.sdc")
-  val tdc = new AlteraShellTcl("shell.quartus.tcl")
+  val io_tcl = new IO_TCL("assign.tcl")
   def pllReset: ModuleValue[Bool]
 
-  // TODO: Do we need to add another shell.quartus.tcl?
+  val pllFactory = new AlteraPLLFactory(this, 9, p => Module(new AlteraPLL(p)))
+
+  sdc.addSDCDirective("derive_pll_clocks")
+  sdc.addSDCDirective("derive_clock_uncertainty")
+
+  override def designParameters = super.designParameters.alterPartial {
+    case PLLFactoryKey => pllFactory
+  }
 }
+
+
+/*
+   Copyright 2016 SiFive, Inc.
+   Copyright 2025 Ckristian Duran
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/

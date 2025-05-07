@@ -3,6 +3,7 @@ package sifive.fpgashells.devices.xilinx.xilinxvc707pciex1
 import chisel3._
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.prci._
 import freechips.rocketchip.interrupts._
 import freechips.rocketchip.subsystem.{CacheBlockBytes, CrossesToOnlyOneClockDomain}
 import freechips.rocketchip.tilelink._
@@ -60,7 +61,7 @@ class XilinxVC707PCIeX1(implicit p: Parameters, val crossing: ClockCrossingType 
     val io = IO(new Bundle {
       val port = new XilinxVC707PCIeX1IO
     })
-
+    override def provideImplicitClockToLazyChildren = true
     childClock := io.port.axi_aclk_out
     childReset := ~io.port.axi_aresetn
 

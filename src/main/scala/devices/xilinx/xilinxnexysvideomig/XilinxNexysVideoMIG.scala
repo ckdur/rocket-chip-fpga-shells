@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.experimental.attach
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.prci._
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.tilelink._
 import org.chipsalliance.cde.config.Parameters
@@ -44,7 +45,7 @@ class XilinxNexysVideoMIGIsland(c: XilinxNexysVideoMIGParams, val crossing: Cloc
     val io = IO(new Bundle {
       val port = new XilinxNexysVideoMIGIO(depth)
     })
-
+    override def provideImplicitClockToLazyChildren = true
     childClock := io.port.ui_clk
     childReset := io.port.ui_clk_sync_rst
 
