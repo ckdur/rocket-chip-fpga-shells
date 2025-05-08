@@ -5,6 +5,7 @@ import chisel3.experimental.{Analog, attach}
 import chisel3.experimental.dataview._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
+import freechips.rocketchip.prci._
 import freechips.rocketchip.util._
 import org.chipsalliance.cde.config._
 import sifive.fpgashells.clocks._
@@ -30,8 +31,8 @@ class SysClockTR4PlacedOverlay(val shell: AlteraShell, val bank: Int, name: Stri
 
   shell { InModuleBody {
     val clk: Clock = io
-    shell.tdc.addPackagePin(clk, bank_map(bank))
-    shell.tdc.addIOStandard(clk, "2.5V")
+    shell.io_tcl.addPackagePin(clk, bank_map(bank))
+    shell.io_tcl.addIOStandard(clk, "2.5V")
   } }
 }
 
@@ -120,8 +121,8 @@ class GPIOPeripheralTR4PlacedOverlay(val shell: TR4Shell, val which: TR4Elem, na
     println(packagePinsWithPackageIOs)
 
     packagePinsWithPackageIOs foreach { case (pin, io) => {
-      shell.tdc.addPackagePin(io, pin)
-      shell.tdc.addIOStandard(io, which.GetStandard)
+      shell.io_tcl.addPackagePin(io, pin)
+      shell.io_tcl.addIOStandard(io, which.GetStandard)
     } }
   } }
 }
@@ -144,8 +145,8 @@ class GPIO0TR4PlacedOverlay(val shell: TR4Shell, val which: TR4Elem, name: Strin
     println(packagePinsWithPackageIOs)
 
     packagePinsWithPackageIOs foreach { case (pin, io) => {
-      shell.tdc.addPackagePin(io, pin)
-      shell.tdc.addIOStandard(io, which.GetStandard)
+      shell.io_tcl.addPackagePin(io, pin)
+      shell.io_tcl.addIOStandard(io, which.GetStandard)
     } }
   } }
 }
@@ -174,11 +175,11 @@ class SPIFlashTR4PlacedOverlay(val shell: TR4Shell, val which: TR4Elem, name: St
     println(packagePinsWithPackageIOs)
 
     packagePinsWithPackageIOs foreach { case (pin, io) =>
-      shell.tdc.addPackagePin(io, pin)
-      shell.tdc.addIOStandard(io, which.GetStandard)
+      shell.io_tcl.addPackagePin(io, pin)
+      shell.io_tcl.addIOStandard(io, which.GetStandard)
     }
     packagePinsWithPackageIOs drop 1 foreach { case (pin, io) => {
-      shell.tdc.addPullup(io)
+      shell.io_tcl.addPullup(io)
     } }
   } }
 }
@@ -207,11 +208,11 @@ class SPITR4PlacedOverlay(val shell: TR4Shell, val which: TR4Elem, name: String,
     println(packagePinsWithPackageIOs)
 
     packagePinsWithPackageIOs foreach { case (pin, io) =>
-      shell.tdc.addPackagePin(io, pin)
-      shell.tdc.addIOStandard(io, which.GetStandard)
+      shell.io_tcl.addPackagePin(io, pin)
+      shell.io_tcl.addIOStandard(io, which.GetStandard)
     }
     packagePinsWithPackageIOs drop 1 foreach { case (pin, io) => {
-      shell.tdc.addPullup(io)
+      shell.io_tcl.addPullup(io)
     } }
   } }
 }
@@ -228,7 +229,7 @@ class JTAGDebugTR4PlacedOverlay(val shell: TR4Shell, val which: TR4Elem, name: S
 {
   shell { InModuleBody {
     shell.sdc.addClock("JTCK", IOPin(io.jtag_TCK), 10)
-    shell.sdc.addGroupOnlyNames(clocks = Seq("JTCK"))
+    shell.sdc.addGroup(clocks = Seq("JTCK"))
     val iopins = Seq(IOPin(io.jtag_TDI),
       IOPin(io.jtag_TDO),
       IOPin(io.jtag_TCK),
@@ -241,9 +242,9 @@ class JTAGDebugTR4PlacedOverlay(val shell: TR4Shell, val which: TR4Elem, name: S
     println(packagePinsWithPackageIOs)
 
     packagePinsWithPackageIOs foreach { case (pin, io) =>
-      shell.tdc.addPackagePin(io, pin)
-      shell.tdc.addIOStandard(io, which.GetStandard)
-      shell.tdc.addPullup(io)
+      shell.io_tcl.addPackagePin(io, pin)
+      shell.io_tcl.addIOStandard(io, which.GetStandard)
+      shell.io_tcl.addPullup(io)
     }
   } }
 }
@@ -268,8 +269,8 @@ class UARTTR4PlacedOverlay(val shell: TR4Shell, val which: TR4Elem, name: String
     println(packagePinsWithPackageIOs)
 
     packagePinsWithPackageIOs foreach { case (pin, io) =>
-      shell.tdc.addPackagePin(io, pin)
-      shell.tdc.addIOStandard(io, which.GetStandard)
+      shell.io_tcl.addPackagePin(io, pin)
+      shell.io_tcl.addIOStandard(io, which.GetStandard)
     }
   } }
 }
@@ -573,7 +574,7 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     ui.clock := port.mem_afi_clk_clk
     ui.reset := !port.mem_afi_reset_reset_n  // TODO: Get the locked also?
     port.mem_pll_ref_clk_clk := sys.clock
-    port.mem_global_reset_reset_n := !sys.reset // pllReset
+    port.mem_global_reset_reset_n := !sys.reset.asBool // pllReset
     port.mem_soft_reset_reset := sys.reset
 
     getStatus.mem_status_local_init_done := port.mem_status_local_init_done
@@ -581,101 +582,101 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     getStatus.mem_status_local_cal_fail := port.mem_status_local_cal_fail
 
     TR4DDR3Locs.mem_a.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_a, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_a, i), "SSTL-15 CLASS I")
-      shell.tdc.addDriveStrength(IOPin(io.memory_mem_a, i), "MAXIMUM CURRENT")
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_a, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_a, i), "SSTL-15 CLASS I")
+      shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_a, i), "MAXIMUM CURRENT")
     }
     TR4DDR3Locs.mem_dm.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_dm, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_dm, i), "SSTL-15 CLASS I")
-      shell.tdc.addTermination(IOPin(io.memory_mem_dm, i), "50 OHM WITH CALIBRATION")
-      shell.tdc.addGroup(
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_dm, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_dm, i), "SSTL-15 CLASS I")
+      shell.io_tcl.addTermination(IOPin(io.memory_mem_dm, i), "50 OHM WITH CALIBRATION")
+      shell.io_tcl.addGroup(
         IOPin(io.memory_mem_dqs, i),
         IOPin(io.memory_mem_dm, i),
         "9"
       )
-      shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dm, i))
+      shell.io_tcl.addInterfaceDelay(IOPin(io.memory_mem_dm, i))
     }
     TR4DDR3Locs.mem_dq.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_dq, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_dq, i), "SSTL-15 CLASS I")
-      shell.tdc.addTermination(IOPin(io.memory_mem_dq, i), "50 OHM WITH CALIBRATION")
-      shell.tdc.addGroup(
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_dq, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_dq, i), "SSTL-15 CLASS I")
+      shell.io_tcl.addTermination(IOPin(io.memory_mem_dq, i), "50 OHM WITH CALIBRATION")
+      shell.io_tcl.addGroup(
         IOPin(io.memory_mem_dqs, i / 8),
         IOPin(io.memory_mem_dq, i),
         "9"
       )
-      shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dq, i))
+      shell.io_tcl.addInterfaceDelay(IOPin(io.memory_mem_dq, i))
     }
     TR4DDR3Locs.mem_dqs.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_dqs, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_dqs, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
-      shell.tdc.addTermination(IOPin(io.memory_mem_dqs, i), "50 OHM WITH CALIBRATION")
-      shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dqs, i))
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_dqs, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_dqs, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
+      shell.io_tcl.addTermination(IOPin(io.memory_mem_dqs, i), "50 OHM WITH CALIBRATION")
+      shell.io_tcl.addInterfaceDelay(IOPin(io.memory_mem_dqs, i))
     }
     TR4DDR3Locs.mem_dqs_n.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_dqs_n, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_dqs_n, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
-      shell.tdc.addTermination(IOPin(io.memory_mem_dqs_n, i), "50 OHM WITH CALIBRATION")
-      shell.tdc.addInterfaceDelay(IOPin(io.memory_mem_dqs_n, i))
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_dqs_n, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_dqs_n, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
+      shell.io_tcl.addTermination(IOPin(io.memory_mem_dqs_n, i), "50 OHM WITH CALIBRATION")
+      shell.io_tcl.addInterfaceDelay(IOPin(io.memory_mem_dqs_n, i))
     }
     TR4DDR3Locs.mem_ba.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_ba, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_ba, i), "SSTL-15 CLASS I")
-      shell.tdc.addDriveStrength(IOPin(io.memory_mem_ba, i), "MAXIMUM CURRENT")
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_ba, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_ba, i), "SSTL-15 CLASS I")
+      shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_ba, i), "MAXIMUM CURRENT")
     }
     TR4DDR3Locs.mem_cke.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_cke, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_cke, i), "SSTL-15 CLASS I")
-      shell.tdc.addDriveStrength(IOPin(io.memory_mem_cke, i), "MAXIMUM CURRENT")
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_cke, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_cke, i), "SSTL-15 CLASS I")
+      shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_cke, i), "MAXIMUM CURRENT")
     }
     TR4DDR3Locs.mem_ck.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_ck, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_ck, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
-      shell.tdc.addTermination(IOPin(io.memory_mem_ck, i), "50 OHM WITHOUT CALIBRATION")
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_ck, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_ck, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
+      shell.io_tcl.addTermination(IOPin(io.memory_mem_ck, i), "50 OHM WITHOUT CALIBRATION")
     }
     TR4DDR3Locs.mem_ck_n.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_ck_n, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_ck_n, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
-      shell.tdc.addTermination(IOPin(io.memory_mem_ck_n, i), "50 OHM WITHOUT CALIBRATION")
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_ck_n, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_ck_n, i), "DIFFERENTIAL 1.5-V SSTL CLASS I")
+      shell.io_tcl.addTermination(IOPin(io.memory_mem_ck_n, i), "50 OHM WITHOUT CALIBRATION")
     }
     TR4DDR3Locs.mem_cs_n.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_cs_n, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_cs_n, i), "SSTL-15 CLASS I")
-      shell.tdc.addDriveStrength(IOPin(io.memory_mem_cs_n, i), "MAXIMUM CURRENT")
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_cs_n, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_cs_n, i), "SSTL-15 CLASS I")
+      shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_cs_n, i), "MAXIMUM CURRENT")
     }
     TR4DDR3Locs.mem_odt.zipWithIndex.foreach { case (pin, i) =>
-      shell.tdc.addPackagePin(IOPin(io.memory_mem_odt, i), pin)
-      shell.tdc.addIOStandard(IOPin(io.memory_mem_odt, i), "SSTL-15 CLASS I")
-      shell.tdc.addDriveStrength(IOPin(io.memory_mem_odt, i), "MAXIMUM CURRENT")
+      shell.io_tcl.addPackagePin(IOPin(io.memory_mem_odt, i), pin)
+      shell.io_tcl.addIOStandard(IOPin(io.memory_mem_odt, i), "SSTL-15 CLASS I")
+      shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_odt, i), "MAXIMUM CURRENT")
     }
     io.oct.rdn.foreach { rdn =>
-      shell.tdc.addPackagePin(IOPin(rdn), TR4DDR3Locs.mem_oct_rdn)
-      shell.tdc.addIOStandard(IOPin(rdn), "1.5V")
+      shell.io_tcl.addPackagePin(IOPin(rdn), TR4DDR3Locs.mem_oct_rdn)
+      shell.io_tcl.addIOStandard(IOPin(rdn), "1.5V")
     }
     io.oct.rup.foreach { rup =>
-      shell.tdc.addPackagePin(IOPin(rup), TR4DDR3Locs.mem_oct_rup)
-      shell.tdc.addIOStandard(IOPin(rup), "1.5V")
+      shell.io_tcl.addPackagePin(IOPin(rup), TR4DDR3Locs.mem_oct_rup)
+      shell.io_tcl.addIOStandard(IOPin(rup), "1.5V")
     }
-    shell.tdc.addPackagePin(IOPin(io.memory_mem_cas_n), TR4DDR3Locs.mem_cas_n)
-    shell.tdc.addIOStandard(IOPin(io.memory_mem_cas_n), "SSTL-15 CLASS I")
-    shell.tdc.addDriveStrength(IOPin(io.memory_mem_cas_n), "MAXIMUM CURRENT")
-    shell.tdc.addPackagePin(IOPin(io.memory_mem_ras_n), TR4DDR3Locs.mem_ras_n)
-    shell.tdc.addIOStandard(IOPin(io.memory_mem_ras_n), "SSTL-15 CLASS I")
-    shell.tdc.addDriveStrength(IOPin(io.memory_mem_ras_n), "MAXIMUM CURRENT")
+    shell.io_tcl.addPackagePin(IOPin(io.memory_mem_cas_n), TR4DDR3Locs.mem_cas_n)
+    shell.io_tcl.addIOStandard(IOPin(io.memory_mem_cas_n), "SSTL-15 CLASS I")
+    shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_cas_n), "MAXIMUM CURRENT")
+    shell.io_tcl.addPackagePin(IOPin(io.memory_mem_ras_n), TR4DDR3Locs.mem_ras_n)
+    shell.io_tcl.addIOStandard(IOPin(io.memory_mem_ras_n), "SSTL-15 CLASS I")
+    shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_ras_n), "MAXIMUM CURRENT")
     io.memory_mem_reset_n.foreach { reset_n =>
-      shell.tdc.addPackagePin(IOPin(reset_n), TR4DDR3Locs.mem_reset_n)
-      shell.tdc.addIOStandard(IOPin(reset_n), "1.5V")
+      shell.io_tcl.addPackagePin(IOPin(reset_n), TR4DDR3Locs.mem_reset_n)
+      shell.io_tcl.addIOStandard(IOPin(reset_n), "1.5V")
     }
-    shell.tdc.addPackagePin(IOPin(io.memory_mem_we_n), TR4DDR3Locs.mem_we_n)
-    shell.tdc.addIOStandard(IOPin(io.memory_mem_we_n), "SSTL-15 CLASS I")
-    shell.tdc.addDriveStrength(IOPin(io.memory_mem_we_n), "MAXIMUM CURRENT")
+    shell.io_tcl.addPackagePin(IOPin(io.memory_mem_we_n), TR4DDR3Locs.mem_we_n)
+    shell.io_tcl.addIOStandard(IOPin(io.memory_mem_we_n), "SSTL-15 CLASS I")
+    shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_we_n), "MAXIMUM CURRENT")
   } }
 
   // TODO: Highly cursed. The qip will create this clock, and there is no known way to retrieve it
   // NOTE: If there is a way to retrieve the .sdc from this IP, maybe there is a possibility
 
-  shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_afi_clk"))
+  //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_afi_clk"))
   //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_mem_clk"))
   //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_write_clk"))
   //shell.sdc.addGroupOnlyNames(clocks = Seq("memif|island|blackbox|mem|pll0|pll_addr_cmd_clk"))
@@ -690,7 +691,8 @@ class DDRTR4ShellPlacer(val shell: TR4Shell, val shellInput: DDRShellInput)(impl
 
 abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
 {
-  val pllFactory = new PLLFactory(this, 10, p => Module(new QsysALTPLL(PLLCalcParameters(p))))
+  // NOTE: Superseeded by the original alterapll from the update
+  //val pllFactory = new PLLFactory(this, 10, p => Module(new QsysALTPLL(PLLCalcParameters(p))))
   override def designParameters = super.designParameters.alterPartial {
     case PLLFactoryKey => pllFactory
   }
@@ -713,14 +715,15 @@ abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
 }
 
 class TR4ShellImpl(outer: TR4Shell) extends LazyRawModuleImp(outer) {
+  override def provideImplicitClockToLazyChildren = true
   val FAN_CTRL = IO(Output(Bool()))
   FAN_CTRL := true.B
-  outer.tdc.addPackagePin(FAN_CTRL, "PIN_B17")
-  outer.tdc.addIOStandard(FAN_CTRL, "1.5V")
+  outer.io_tcl.addPackagePin(FAN_CTRL, "PIN_B17")
+  outer.io_tcl.addIOStandard(FAN_CTRL, "1.5V")
 
   val reset = IO(Analog(1.W))
-  outer.tdc.addPackagePin(IOPin(reset), "PIN_L19")
-  outer.tdc.addIOStandard(IOPin(reset), "1.5V")
+  outer.io_tcl.addPackagePin(IOPin(reset), "PIN_L19")
+  outer.io_tcl.addIOStandard(IOPin(reset), "1.5V")
   val reset_ibuf = Module(new ALT_IOBUF)
   attach(reset_ibuf.io.io, reset)
   outer.resetPin := !reset_ibuf.asInput() || outer.ndreset

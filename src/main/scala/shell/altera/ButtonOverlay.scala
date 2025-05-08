@@ -15,8 +15,8 @@ abstract class ButtonAlteraPlacedOverlay(name: String, di: ButtonDesignInput, si
 
     val ios = IOPin.of(io)
     (packagePin.toSeq zip ios) foreach { case (pin, io) =>
-      shell.tdc.addPackagePin(io, pin)
-      shell.tdc.addIOStandard(io, ioStandard)
+      shell.io_tcl.addPackagePin(io, pin)
+      shell.io_tcl.addIOStandard(io, ioStandard)
     }
   } }
 }

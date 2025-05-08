@@ -43,26 +43,26 @@ class AlteraHSMCPlacedOverlay(val shell: AlteraShell, val locs: HasAlteraHSMCLoc
   shell { InModuleBody {
     io <> hsmcWire
 
-    shell.tdc.addPackagePin(IOPin(io.CLKIN0), locs.CLKIN0); shell.tdc.addIOStandard(IOPin(io.CLKIN0), ioStandard)
-    shell.tdc.addPackagePin(IOPin(io.CLKIN_n1), locs.CLKIN_n1); shell.tdc.addIOStandard(IOPin(io.CLKIN_n1), ioStandard)
-    shell.tdc.addPackagePin(IOPin(io.CLKIN_n2), locs.CLKIN_n2); shell.tdc.addIOStandard(IOPin(io.CLKIN_n2), ioStandard)
-    shell.tdc.addPackagePin(IOPin(io.CLKIN_p1), locs.CLKIN_p1); shell.tdc.addIOStandard(IOPin(io.CLKIN_p1), ioStandard)
-    shell.tdc.addPackagePin(IOPin(io.CLKIN_p2), locs.CLKIN_p2); shell.tdc.addIOStandard(IOPin(io.CLKIN_p2), ioStandard)
-    io.D.zipWithIndex.foreach{case(elem, i) => shell.tdc.addPackagePin(IOPin(elem), locs.D(i)); shell.tdc.addIOStandard(IOPin(elem), ioStandard)}
-    shell.tdc.addPackagePin(IOPin(io.OUT0), locs.OUT0); shell.tdc.addIOStandard(IOPin(io.OUT0), ioStandard)
+    shell.io_tcl.addPackagePin(IOPin(io.CLKIN0), locs.CLKIN0); shell.io_tcl.addIOStandard(IOPin(io.CLKIN0), ioStandard)
+    shell.io_tcl.addPackagePin(IOPin(io.CLKIN_n1), locs.CLKIN_n1); shell.io_tcl.addIOStandard(IOPin(io.CLKIN_n1), ioStandard)
+    shell.io_tcl.addPackagePin(IOPin(io.CLKIN_n2), locs.CLKIN_n2); shell.io_tcl.addIOStandard(IOPin(io.CLKIN_n2), ioStandard)
+    shell.io_tcl.addPackagePin(IOPin(io.CLKIN_p1), locs.CLKIN_p1); shell.io_tcl.addIOStandard(IOPin(io.CLKIN_p1), ioStandard)
+    shell.io_tcl.addPackagePin(IOPin(io.CLKIN_p2), locs.CLKIN_p2); shell.io_tcl.addIOStandard(IOPin(io.CLKIN_p2), ioStandard)
+    io.D.zipWithIndex.foreach{case(elem, i) => shell.io_tcl.addPackagePin(IOPin(elem), locs.D(i)); shell.io_tcl.addIOStandard(IOPin(elem), ioStandard)}
+    shell.io_tcl.addPackagePin(IOPin(io.OUT0), locs.OUT0); shell.io_tcl.addIOStandard(IOPin(io.OUT0), ioStandard)
 
     if (designInput.hsmcParam.on1) {
-      shell.tdc.addPackagePin(IOPin(io.OUT_n1.get), locs.OUT_n1); shell.tdc.addIOStandard(IOPin(io.OUT_n1.get), ioStandard)
-      shell.tdc.addPackagePin(IOPin(io.OUT_p1.get), locs.OUT_p1); shell.tdc.addIOStandard(IOPin(io.OUT_p1.get), ioStandard)
+      shell.io_tcl.addPackagePin(IOPin(io.OUT_n1.get), locs.OUT_n1); shell.io_tcl.addIOStandard(IOPin(io.OUT_n1.get), ioStandard)
+      shell.io_tcl.addPackagePin(IOPin(io.OUT_p1.get), locs.OUT_p1); shell.io_tcl.addIOStandard(IOPin(io.OUT_p1.get), ioStandard)
     }
     if (designInput.hsmcParam.on2) {
-      shell.tdc.addPackagePin(IOPin(io.OUT_n2.get), locs.OUT_n2); shell.tdc.addIOStandard(IOPin(io.OUT_n2.get), ioStandard)
-      shell.tdc.addPackagePin(IOPin(io.OUT_p2.get), locs.OUT_p2); shell.tdc.addIOStandard(IOPin(io.OUT_p2.get), ioStandard)
+      shell.io_tcl.addPackagePin(IOPin(io.OUT_n2.get), locs.OUT_n2); shell.io_tcl.addIOStandard(IOPin(io.OUT_n2.get), ioStandard)
+      shell.io_tcl.addPackagePin(IOPin(io.OUT_p2.get), locs.OUT_p2); shell.io_tcl.addIOStandard(IOPin(io.OUT_p2.get), ioStandard)
     }
-    io.RX_n.zipWithIndex.foreach{case(elem, i) => shell.tdc.addPackagePin(IOPin(elem), locs.RX_n(i)); shell.tdc.addIOStandard(IOPin(elem), ioStandard)}
-    io.RX_p.zipWithIndex.foreach{case(elem, i) => shell.tdc.addPackagePin(IOPin(elem), locs.RX_p(i)); shell.tdc.addIOStandard(IOPin(elem), ioStandard)}
-    io.TX_n.zipWithIndex.foreach{case(elem, i) => shell.tdc.addPackagePin(IOPin(elem), locs.TX_n(i)); shell.tdc.addIOStandard(IOPin(elem), ioStandard)}
-    io.TX_p.zipWithIndex.foreach{case(elem, i) => shell.tdc.addPackagePin(IOPin(elem), locs.TX_p(i)); shell.tdc.addIOStandard(IOPin(elem), ioStandard)}
+    io.RX_n.zipWithIndex.foreach{case(elem, i) => shell.io_tcl.addPackagePin(IOPin(elem), locs.RX_n(i)); shell.io_tcl.addIOStandard(IOPin(elem), ioStandard)}
+    io.RX_p.zipWithIndex.foreach{case(elem, i) => shell.io_tcl.addPackagePin(IOPin(elem), locs.RX_p(i)); shell.io_tcl.addIOStandard(IOPin(elem), ioStandard)}
+    io.TX_n.zipWithIndex.foreach{case(elem, i) => shell.io_tcl.addPackagePin(IOPin(elem), locs.TX_n(i)); shell.io_tcl.addIOStandard(IOPin(elem), ioStandard)}
+    io.TX_p.zipWithIndex.foreach{case(elem, i) => shell.io_tcl.addPackagePin(IOPin(elem), locs.TX_p(i)); shell.io_tcl.addIOStandard(IOPin(elem), ioStandard)}
 
   } }
 }
