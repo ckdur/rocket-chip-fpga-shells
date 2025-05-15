@@ -8,7 +8,7 @@ import sifive.fpgashells.shell._
 abstract class SwitchAlteraPlacedOverlay(name: String, di: SwitchDesignInput, si: SwitchShellInput, boardPin: Option[String] = None, packagePin: Option[String] = None, ioStandard: String = "2.5V")
   extends SwitchPlacedOverlay(name, di, si)
 {
-  def shell: AlteraShell
+  def shell: AlteraGenericShell
 
   shell { InModuleBody {
     switchWire := io

@@ -7,7 +7,7 @@ import sifive.fpgashells.shell._
 abstract class JTAGDebugAlteraPlacedOverlay(name: String, di: JTAGDebugDesignInput, si: JTAGDebugShellInput)
   extends JTAGDebugPlacedOverlay(name, di, si)
 {
-  def shell: AlteraShell
+  def shell: AlteraGenericShell
 
   shell { InModuleBody {
     jtagDebugSink.bundle.TCK := ALT_IOBUF(io.jtag_TCK).asBool.asClock

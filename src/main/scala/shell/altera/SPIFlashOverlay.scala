@@ -10,7 +10,7 @@ import sifive.fpgashells.shell._
 abstract class SPIFlashAlteraPlacedOverlay(name: String, di: SPIFlashDesignInput, si: SPIFlashShellInput)
   extends SPIFlashPlacedOverlay(name, di, si)
 {
-  def shell: AlteraShell
+  def shell: AlteraGenericShell
 
   shell { InModuleBody {
     val sck = ALT_IOBUF.apply.suggestName(s"${name}_sck_buf")

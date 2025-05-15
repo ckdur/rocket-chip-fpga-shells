@@ -8,7 +8,7 @@ import sifive.fpgashells.shell._
 abstract class ButtonAlteraPlacedOverlay(name: String, di: ButtonDesignInput, si: ButtonShellInput, boardPin: Option[String] = None, packagePin: Option[String] = None, ioStandard: String = "1.5V")
   extends ButtonPlacedOverlay(name, di, si)
 {
-  def shell: AlteraShell
+  def shell: AlteraGenericShell
 
   shell { InModuleBody {
     buttonWire := io

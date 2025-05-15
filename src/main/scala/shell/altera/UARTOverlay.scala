@@ -8,7 +8,7 @@ import sifive.fpgashells.shell._
 abstract class UARTAlteraPlacedOverlay(name: String, di: UARTDesignInput, si: UARTShellInput, flowControl: Boolean)
   extends UARTPlacedOverlay(name, di, si, flowControl)
 {
-  def shell: AlteraShell
+  def shell: AlteraGenericShell
 
   shell { InModuleBody {
     ALT_IOBUF(tluartSink.bundle.txd, io.txd, true.B)

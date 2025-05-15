@@ -31,7 +31,7 @@ trait HasAlteraHSMCLocs {
   val TX_p: Seq[String]
 }
 
-class AlteraHSMCPlacedOverlay(val shell: AlteraShell, val locs: HasAlteraHSMCLocs, val name: String, val designInput: AlteraHSMCDesignInput, val shellInput: AlteraHSMCShellInput, val ioStandard: String = "2.5V")
+class AlteraHSMCPlacedOverlay(val shell: AlteraGenericShell, val locs: HasAlteraHSMCLocs, val name: String, val designInput: AlteraHSMCDesignInput, val shellInput: AlteraHSMCShellInput, val ioStandard: String = "2.5V")
   extends IOPlacedOverlay[AlteraHSMC, AlteraHSMCDesignInput, AlteraHSMCShellInput, AlteraHSMCOverlayOutput]
 {
   implicit val p = designInput.p
@@ -67,7 +67,7 @@ class AlteraHSMCPlacedOverlay(val shell: AlteraShell, val locs: HasAlteraHSMCLoc
   } }
 }
 
-class AlteraHSMCTR4ShellPlacer(val shell: AlteraShell, val locs: HasAlteraHSMCLocs, val shellInput: AlteraHSMCShellInput)(implicit val valName: ValName)
+class AlteraHSMCTR4ShellPlacer(val shell: AlteraGenericShell, val locs: HasAlteraHSMCLocs, val shellInput: AlteraHSMCShellInput)(implicit val valName: ValName)
   extends AlteraHSMCShellPlacer[AlteraShell] {
 
   def place(designInput: AlteraHSMCDesignInput) = new AlteraHSMCPlacedOverlay(shell, locs, valName.name, designInput, shellInput)

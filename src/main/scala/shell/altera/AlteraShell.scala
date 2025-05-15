@@ -1,9 +1,9 @@
 package sifive.fpgashells.shell.altera
 
 import chisel3._
-import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.util._
 import org.chipsalliance.cde.config._
+import org.chipsalliance.diplomacy.lazymodule._
 import sifive.fpgashells.clocks._
 import sifive.fpgashells.ip.altera._
 import sifive.fpgashells.shell._
@@ -39,6 +39,13 @@ class IO_TCL(val name: String)
   def addInterfaceDelay(io: IOPin, value: String = "FLEXIBLE_TIMING"): Unit = {
     addConstraint(s"set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG ${value} -to ${io.name}")
   }
+}
+
+abstract class AlteraGenericShell()(implicit p: Parameters) extends IOShell
+{
+  val sdc = new AlteraGenericSDC("shell.sdc")
+  val io_tcl = new IO_TCL("shell.quartus.tcl")
+  def pllReset: ModuleValue[Bool]
 }
 
 abstract class AlteraShell()(implicit p: Parameters) extends IOShell

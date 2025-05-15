@@ -10,7 +10,7 @@ import sifive.fpgashells.shell._
 abstract class GPIOAlteraPlacedOverlay(name: String, di: GPIODesignInput, si: GPIOShellInput)
   extends GPIOPlacedOverlay(name, di, si)
 {
-  def shell: AlteraShell
+  def shell: AlteraGenericShell
 
   shell { InModuleBody {
     tlgpioSink.bundle.pins.zipWithIndex.foreach{ case (tlpin, idx) => {
@@ -39,7 +39,7 @@ abstract class GPIODirectAlteraPlacedOverlay(val name: String, val designInput: 
 
   def overlayOutput = GPIODirectAlteraOverlayOutput(gpio)
 
-  def shell: AlteraShell
+  def shell: AlteraGenericShell
 
   /*shell { InModuleBody {
     gpio.zipWithIndex.foreach{ case (pin, idx) =>

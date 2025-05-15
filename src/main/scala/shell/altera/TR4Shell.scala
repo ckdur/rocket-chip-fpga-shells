@@ -16,8 +16,8 @@ import sifive.fpgashells.shell._
 
 case object GPIO0OverlayKey extends Field[Seq[DesignPlacer[GPIODirectAlteraDesignInput, GPIOShellInput, GPIODirectAlteraOverlayOutput]]](Nil)
 
-class SysClockTR4PlacedOverlay(val shell: AlteraShell, val bank: Int, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)
-  extends SingleEndedClockInputAlteraPlacedOverlay(name, designInput, shellInput)
+class SysClockTR4PlacedOverlay(val shell: AlteraGenericShell, val bank: Int, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)
+  extends SingleEndedClockInputAlteraGenericPlacedOverlay(name, designInput, shellInput)
 {
   val bank_map = Map(
     1 -> "PIN_AB34",
@@ -41,14 +41,14 @@ object LEDTR4PinConstraints{
   val pins = Seq("PIN_B19", "PIN_A18", "PIN_D19", "PIN_C19")
 }
 class LEDTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: LEDDesignInput, val shellInput: LEDShellInput)
-  extends LEDAlteraPlacedOverlay(name, designInput, shellInput, packagePin = Some(LEDTR4PinConstraints.pins(shellInput.number)))
+  extends LEDAlteraGenericPlacedOverlay(name, designInput, shellInput, packagePin = Some(LEDTR4PinConstraints.pins(shellInput.number)))
 class LEDTR4ShellPlacer(val shell: TR4Shell, val shellInput: LEDShellInput)(implicit val valName: ValName)
   extends LEDShellPlacer[TR4Shell] {
   def place(designInput: LEDDesignInput) = new LEDTR4PlacedOverlay(shell, valName.name, designInput, shellInput)
 }
 
-class SysClockTR4ShellPlacer(val shell: AlteraShell, val bank: Int, val shellInput: ClockInputShellInput)(implicit val valName: ValName)
-  extends ClockInputShellPlacer[AlteraShell] {
+class SysClockTR4ShellPlacer(val shell: AlteraGenericShell, val bank: Int, val shellInput: ClockInputShellInput)(implicit val valName: ValName)
+  extends ClockInputShellPlacer[AlteraGenericShell] {
   def place(designInput: ClockInputDesignInput) = new SysClockTR4PlacedOverlay(shell, bank, valName.name, designInput, shellInput)
 }
 
@@ -689,10 +689,10 @@ class DDRTR4ShellPlacer(val shell: TR4Shell, val shellInput: DDRShellInput)(impl
   def place(designInput: DDRDesignInput) = new DDRTR4PlacedOverlay(shell, valName.name, designInput, shellInput)
 }
 
-abstract class TR4Shell()(implicit p: Parameters) extends AlteraShell
+abstract class TR4Shell()(implicit p: Parameters) extends AlteraGenericShell
 {
-  // NOTE: Superseeded by the original alterapll from the update
-  //val pllFactory = new PLLFactory(this, 10, p => Module(new QsysALTPLL(PLLCalcParameters(p))))
+  // NOTE: The new AlteraShell now put the PLLFactory. Is a shame but we need to use our own Shell
+  val pllFactory = new PLLFactory(this, 10, p => Module(new QsysALTPLL(PLLCalcParameters(p))))
   override def designParameters = super.designParameters.alterPartial {
     case PLLFactoryKey => pllFactory
   }

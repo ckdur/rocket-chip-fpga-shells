@@ -1,57 +1,24 @@
-package require ::quartus::flow
+# See LICENSE for license details.
 
-set top_model [lindex $argv 0]
-set board [lindex $argv 1]
-set proj_longname [lindex $argv 2]
-
-set ip_tcls [lindex $argv 3]
-
-project_new -overwrite -revision $top_model $top_model
-# Setup board specific quartus settings
+# Set the variable for the directory that includes all scripts
 set scriptdir [file dirname [info script]]
-set boarddir [file join [file dirname [file dirname $scriptdir]] $board]
 
-source [file join $boarddir tcl board.tcl]
+# Set up variables and objects
+source [file join $scriptdir "prologue.tcl"]
 
-# Setup common quartus lanugage settings
-set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
-set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
-set_global_assignment -name VERILOG_MACRO "SYNTHESIS=<None>"
+# Initialize project files
+source [file join $scriptdir "init.tcl"]
 
-# Generate and add all IP
-if {$ip_tcls ne {}} {
+# Synthesize the design
+#source [file join $scriptdir "synth.tcl"]
 
-	set ip_tcls [regexp -inline -all -- {\S+} $ip_tcls]
+# Fitter (Takes care of the place & route)
+#source [file join $scriptdir "fit.tcl"]
 
-	foreach ip_tcl $ip_tcls {
-		source $ip_tcl
-	}
-}
+# Generate bitstream and save verilog netlist
+#source [file join $scriptdir "assembly.tcl"]
 
-# Add synthesis fileset to quartus
-set sl [open $proj_longname.vsrcs.f r]
-set files [lsearch -not -exact -all -inline [split [read $sl] "\n"] {}]
+# Do the timing analysis
+#source [file join $scriptdir "sta.tcl"]
 
-foreach path $files {
-	if {![string match {#*} $path]} {
-		if {[string match {*.v} $path]} {
-			set_global_assignment -name VERILOG_FILE $path
-		} elseif {[string match {*.sv} $path]} {
-			set_global_assignment -name SYSTEMVERILOG_FILE $path
-		}
-	}
-}
-
-# Add pin assignments and clock constraints
-source $proj_longname.assign.tcl
-set_global_assignment -name SDC_FILE $proj_longname.shell.sdc
-
-export_assignments
-
-execute_flow -compile
-project_close
-
+# TODO: Export the reports in a place where is visible

@@ -10,7 +10,7 @@ import sifive.fpgashells.shell._
 abstract class SPIAlteraPlacedOverlay(name: String, di: SPIDesignInput, si: SPIShellInput)
   extends SPIPlacedOverlay(name, di, si)
 {
-  def shell: AlteraShell
+  def shell: AlteraGenericShell
 
   shell { InModuleBody {
     val sck = ALT_IOBUF.apply.suggestName(s"${name}_clk_buf")
