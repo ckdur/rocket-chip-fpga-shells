@@ -52,12 +52,12 @@ class SDIOVCU108PlacedOverlay(val shell: VCU108ShellBasicOverlays, name: String,
   extends SDIOXilinxPlacedOverlay(name, designInput, shellInput)
 {
   shell { InModuleBody {
-    val packagePinsWithPackageIOs = Seq(("B7", IOPin(io.spi_clk)),
-      ("B10", IOPin(io.spi_cs)),      // Actually CMD
-      ("D6", IOPin(io.spi_dat(0))),   // Actually DAT0
-      ("C6", IOPin(io.spi_dat(1))),   // Actually DAT1
-      ("B9", IOPin(io.spi_dat(2))),   // Actually DAT2
-      ("D10", IOPin(io.spi_dat(3))))  // Actually DAT3
+    val packagePinsWithPackageIOs = Seq(("BB16", IOPin(io.spi_clk)), // PMOD3
+      ("BA10", IOPin(io.spi_cs)),      // Actually CMD, PMOD1
+      ("AW16", IOPin(io.spi_dat(0))),  // Actually DAT0, PMOD2
+      ("BC13", IOPin(io.spi_dat(1))),  // Actually DAT1, PMOD4
+      ("BF7", IOPin(io.spi_dat(2))),   // Actually DAT2, PMOD5
+      ("BC14", IOPin(io.spi_dat(3))))  // Actually DAT3, PMOD0
 
     packagePinsWithPackageIOs foreach { case (pin, io) => {
       shell.xdc.addPackagePin(io, pin)
@@ -226,6 +226,7 @@ class DDRVCU108PlacedOverlay(val shell: VCU108ShellBasicOverlays, name: String, 
       "E27",	"E28",	"E26",	"H27",	"F25",	"F28",	"G25",	"G27",	"B28",	"A28",	"B25",	"B27",	"D25",	"C27",	"C25",	"D26",
       "G38",	"G35",	"A40",	"B37",	"N25",	"L25",	"G28",	"A26",
       "H38",	"H34",	"A39",	"B36",	"P25",	"L24",	"H28",	"B26",
+      "J39",	"F34",	"E39",	"D37",	"T26",	"M27",	"G26",	"D27",
     )
 
     (IOPin.of(io) zip allddrpins) foreach { case (io, pin) => shell.xdc.addPackagePin(io, pin) }
@@ -311,7 +312,6 @@ class WithVCU108ShellPMOD2(device: String) extends Config((site, here, up) => {
 })
 
 class WithVCU108ShellPMODJTAG extends WithVCU108ShellPMOD("JTAG")
-class WithVCU108ShellPMODSDIO extends WithVCU108ShellPMOD("SDIO")
 
 // Reassign JTAG pinouts location to PMOD J53
 class WithVCU108ShellPMOD2JTAG extends WithVCU108ShellPMOD2("PMODJ53_JTAG")
