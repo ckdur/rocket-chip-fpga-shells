@@ -1,6 +1,10 @@
 package sifive.fpgashells.shell.xilinx
 
+import chisel3._
+import chisel3.experimental.{Analog, attach}
 import freechips.rocketchip.diplomacy._
+import org.chipsalliance.cde.config.Parameters
+import sifive.fpgashells.ip.xilinx._
 import sifive.fpgashells.shell._
 
 abstract class GPIOXilinxPlacedOverlay(name: String, di: GPIODesignInput, si: GPIOShellInput)
@@ -14,6 +18,30 @@ abstract class GPIOXilinxPlacedOverlay(name: String, di: GPIODesignInput, si: GP
         tlpin.i.ival := AnalogToUInt(io.gpio(idx))
       } }
   } }
+}
+
+case class GPIODirectXilinxDesignInput(width: Int)(implicit val p: Parameters)
+case class GPIODirectXilinxOverlayOutput(io: ModuleValue[Vec[Analog]])
+trait GPIODirectXilinxShellPlacer[Shell] extends ShellPlacer[GPIODirectXilinxDesignInput, GPIOShellInput, GPIODirectXilinxOverlayOutput]
+
+abstract class GPIODirectXilinxPlacedOverlay(val name: String, val designInput: GPIODirectXilinxDesignInput, val shellInput: GPIOShellInput)
+  extends IOPlacedOverlay[ShellGPIOPortIO, GPIODirectXilinxDesignInput, GPIOShellInput, GPIODirectXilinxOverlayOutput]
+{
+  implicit val p = designInput.p
+
+  def ioFactory = new ShellGPIOPortIO(designInput.width)
+
+  val gpio = shell { InModuleBody { io.gpio /*Wire(Vec(designInput.width, Analog(1.W)))*/ } }
+
+  def overlayOutput = GPIODirectXilinxOverlayOutput(gpio)
+
+  def shell: XilinxShell
+
+  /*shell { InModuleBody {
+    gpio.zipWithIndex.foreach{ case (pin, idx) =>
+      attach(pin, io.gpio(idx))
+    }
+  } }*/
 }
 
 /*

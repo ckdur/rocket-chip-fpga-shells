@@ -283,6 +283,36 @@ class PCIeVCU108EdgeShellPlacer(shell: VCU108ShellBasicOverlays, val shellInput:
   def place(designInput: PCIeDesignInput) = new PCIeVCU108EdgePlacedOverlay(shell, valName.name, designInput, shellInput)
 }
 
+trait VCU108Elem {
+  def GetBindings: Seq[String]
+  def GetStandard: String
+}
+
+// Generic GPIO placer
+class GPIO0VCU108PlacedOverlay(val shell: VCU108ShellBasicOverlays, val which: VCU108Elem, name: String, di: GPIODirectXilinxDesignInput, si: GPIOShellInput)
+  extends GPIODirectXilinxPlacedOverlay(name, di, si)
+{
+  shell { InModuleBody {
+    require(io.gpio.length == which.GetBindings.length)
+    val packagePinsWithPackageIOs = io.gpio.zip(which.GetBindings).map {
+      case (io, elem) =>
+        (elem, IOPin(io))
+    }
+    println(packagePinsWithPackageIOs)
+
+    packagePinsWithPackageIOs foreach { case (pin, io) => {
+      shell.xdc.addPackagePin(io, pin)
+      shell.xdc.addIOStandard(io, which.GetStandard)
+    } }
+  } }
+}
+
+class GPIO0VCU108ShellPlacer(val shell: VCU108ShellBasicOverlays, val which: VCU108Elem, val shellInput: GPIOShellInput)(implicit val valName: ValName)
+  extends GPIODirectXilinxShellPlacer[VCU108ShellBasicOverlays] {
+
+  def place(designInput: GPIODirectXilinxDesignInput) = new GPIO0VCU108PlacedOverlay(shell, which, valName.name, designInput, shellInput)
+}
+
 abstract class VCU108ShellBasicOverlays()(implicit p: Parameters) extends UltraScaleShell{
   // PLL reset causes
   val pllReset = InModuleBody { Wire(Bool()) }
