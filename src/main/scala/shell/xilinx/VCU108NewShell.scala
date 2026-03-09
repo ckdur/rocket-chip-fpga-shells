@@ -298,7 +298,7 @@ class GPIO0VCU108PlacedOverlay(val shell: VCU108ShellBasicOverlays, val which: V
       case (io, elem) =>
         (elem, IOPin(io))
     }
-    println(packagePinsWithPackageIOs)
+    //println(packagePinsWithPackageIOs)
 
     packagePinsWithPackageIOs foreach { case (pin, io) => {
       shell.xdc.addPackagePin(io, pin)
