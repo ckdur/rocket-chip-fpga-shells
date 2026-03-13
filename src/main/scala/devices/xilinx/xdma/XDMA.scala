@@ -52,6 +52,31 @@ class XDMA(c: XDMAParams)(implicit p: Parameters, val crossing: ClockCrossingTyp
   }
 }
 
+class XDMADMA(c: XDMAParams)(implicit p: Parameters, val crossing: ClockCrossingType = AsynchronousCrossing(8))
+  extends LazyModule with CrossesToOnlyOneClockDomain
+{
+  val imp = LazyModule(new DiplomaticXDMADMA(c))
+
+  val master: TLOutwardNode =
+    (TLWidthWidget(c.busBytes)
+      := AXI4ToTL()
+      := AXI4UserYanker(capMaxFlight=Some(16))
+      := AXI4Fragmenter()
+      := AXI4IdIndexer(idBits=2)
+      := imp.master)
+
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
+    val io = IO(new Bundle {
+      val pads = new XDMAPads(c.lanes)
+      val clocks = new XDMAClocks
+    })
+
+    io.pads   <> imp.module.io.pads
+    io.clocks <> imp.module.io.clocks
+  }
+}
+
 /*
    Copyright 2016 SiFive, Inc.
 

@@ -240,7 +240,7 @@ class DDRVCU108ShellPlacer(shell: VCU108ShellBasicOverlays, val shellInput: DDRS
 }
 
 class PCIeVCU108EdgePlacedOverlay(val shell: VCU108ShellBasicOverlays, name: String, val designInput: PCIeDesignInput, val shellInput: PCIeShellInput)
-  extends PCIeUltraScalePlacedOverlay(name, designInput, shellInput, XDMAParams(
+  extends PCIeUltraScaleNonPlusPlacedOverlay(name, designInput, shellInput, XDMAParams(
     name     = "edge_xdma",
     location = "X0Y0",
     bars     = designInput.bars,
