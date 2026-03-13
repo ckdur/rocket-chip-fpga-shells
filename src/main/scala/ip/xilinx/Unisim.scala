@@ -99,6 +99,25 @@ extends BlackBox(
   })
 }
 
+class IBUFDS_GTE3(
+     REFCLK_EN_TX_PATH:  Int = 0,
+     REFCLK_HROW_CK_SEL: Int = 0,
+     REFCLK_ICNTL_RX:    Int = 0)
+  extends BlackBox(Map(
+    "REFCLK_EN_TX_PATH"  -> IntParam(REFCLK_EN_TX_PATH),
+    "REFCLK_HROW_CK_SEL" -> IntParam(REFCLK_HROW_CK_SEL),
+    "REFCLK_ICNTL_RX"    -> IntParam(REFCLK_ICNTL_RX)))
+{
+  val io = IO(new Bundle {
+    val O     = Output(Clock())
+    val ODIV2 = Output(Clock())
+    val CEB   = Input(Bool())
+    val I     = Input(Clock())
+    val IB    = Input(Clock())
+  })
+
+}
+
 class IBUFDS_GTE4(
     REFCLK_EN_TX_PATH:  Int = 0,
     REFCLK_HROW_CK_SEL: Int = 0,

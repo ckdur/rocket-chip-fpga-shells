@@ -117,6 +117,7 @@ class XDMADMABlackBox(c: XDMAParams) extends BlackBox
     s"""create_ip -vendor xilinx.com -library ip -version 4.1 -name xdma -module_name ${desiredName} -dir $$ipdir -force
        |set_property -dict [list 							\\
        |  CONFIG.functional_mode		{DMA}				\\
+       |  CONFIG.mode_selection			{Advanced}					\\
        |  CONFIG.pcie_blk_locn			{${c.location}}				\\
        |  CONFIG.device_port_type		{PCI_Express_Endpoint_device}	\\
        |  CONFIG.pf0_bar0_enabled		{true}					\\
@@ -125,6 +126,7 @@ class XDMADMABlackBox(c: XDMAParams) extends BlackBox
        |  CONFIG.pl_link_cap_max_link_width	{X${c.lanes}}				\\
        |  CONFIG.pl_link_cap_max_link_speed	{${pcieGTs}}				\\
        |  CONFIG.msi_rx_pin_en			{false}					\\
+       |  CONFIG.dedicate_perst			{false}					\\
        |  CONFIG.axisten_freq			{${axiMHzStr}}				\\
        |  CONFIG.axi_addr_width			{${c.addrBits}}				\\
        |  CONFIG.axi_data_width			{${c.busBytes*8}_bit}			\\

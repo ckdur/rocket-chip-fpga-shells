@@ -258,7 +258,7 @@ class PCIeVCU108EdgePlacedOverlay(val shell: VCU108ShellBasicOverlays, name: Str
     //   Lanes 08-11 Bank 225
     //   Lanes 12-15 Bank 224
 
-    val ref = Seq("A13", "A14")  /* [pn] PCIE_CLK_QO_*/
+    val ref = Seq("AL9", "AL8")  /* [pn] PCIE_CLK_QO_*/
 
     // PCIe Edge connector U2 : Bank 227, 226
     val rxp = Seq("AJ4", "AK2", "AM2", "AP2", "AT2", "AV2", "AY2", "BB2") // [0-7]

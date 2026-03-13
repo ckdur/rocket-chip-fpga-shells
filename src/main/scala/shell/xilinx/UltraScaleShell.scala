@@ -176,7 +176,7 @@ abstract class PCIeUltraScaleNonPlusPlacedOverlay(name: String, di: PCIeDesignIn
   shell { InModuleBody {
     val b = topBridge.in(0)._1
 
-    val ibufds = Module(new IBUFDS_GTE4)
+    val ibufds = Module(new IBUFDS_GTE3)
     ibufds.suggestName(s"${name}_refclk_ibufds")
     ibufds.io.CEB := false.B
     ibufds.io.I   := io.refclk.p
