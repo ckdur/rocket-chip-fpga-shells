@@ -227,7 +227,9 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
     io.reset := false.B
   }
 
-  val used = Seq.tabulate(7) { i =>
+  val valid_clocks = 6
+
+  val used = Seq.tabulate(valid_clocks) { i =>
     val statement = if(i < c.req.size) "PORT_USED" else "PORT_UNUSED"
     s"set_instance_parameter_value altpll_0 {PORT_clk${i}} {${statement}}\n"
   }.mkString
@@ -239,6 +241,11 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
        |set_instance_parameter_value altpll_0 {CLK${i}_DIVIDE_BY} {${c.divs(i)}}
        |""".stripMargin
   }.mkString
+
+  val hidden = c.req.zipWithIndex.map { case (r, i) =>
+    val freqhz = r.freqMHz * 1000000.0
+    s"PT#EFF_OUTPUT_FREQ_VALUE${i} ${r.freqMHz}"
+  }.mkString(sep=" ")
 
   val itimeps = 1e6 / c.input.freqMHz
 
@@ -266,6 +273,8 @@ class QsysALTPLL(val c: PLLCalcParameters) extends BlackBox with PLLInstance {
        |set_instance_parameter_value altpll_0 {INCLK0_INPUT_FREQUENCY} {${itimeps.toInt}}
        |set_instance_parameter_value altpll_0 {INCLK1_INPUT_FREQUENCY} {}
        |set_instance_parameter_value altpll_0 {INTENDED_DEVICE_FAMILY} {Stratix IV}
+       |# set_instance_parameter_value altpll_0 {HIDDEN_PRIVATES} {${hidden}}; ## DISABLED
+       |# set_instance_parameter_value altpll_0 {WIDTH_CLOCK} {${valid_clocks}}; ## DISABLED
        |
        |# exported interfaces
        |set_instance_property altpll_0 AUTO_EXPORT {true}
