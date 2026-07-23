@@ -312,8 +312,8 @@ class TR4HSMCB extends HasAlteraHSMCLocs {
   val CLKIN_p2 = "PIN_AV14"
   val D = Seq("PIN_AD15", "PIN_AV13", "PIN_AE15", "PIN_AW13")
   val OUT0 = "PIN_AN15"
-  val OUT_n1 = "PIN_"
-  val OUT_p1 = "PIN_"
+  val OUT_n1 = "PIN_AP10"
+  val OUT_p1 = "PIN_AN10"
   val OUT_n2 = "PIN_AJ10"
   val OUT_p2 = "PIN_AH10"
   val RX_n = Seq("PIN_AW10", "PIN_AU9", "PIN_AW7", "PIN_AW5", "PIN_AW4", "PIN_AW8", "PIN_AT5", "PIN_AU6", "PIN_AR8",
