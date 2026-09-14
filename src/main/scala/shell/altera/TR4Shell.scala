@@ -36,6 +36,11 @@ class SysClockTR4PlacedOverlay(val shell: AlteraGenericShell, val bank: Int, nam
   } }
 }
 
+class SysClockTR4ShellPlacer(val shell: AlteraGenericShell, val bank: Int, val shellInput: ClockInputShellInput)(implicit val valName: ValName)
+  extends ClockInputShellPlacer[AlteraGenericShell] {
+  def place(designInput: ClockInputDesignInput) = new SysClockTR4PlacedOverlay(shell, bank, valName.name, designInput, shellInput)
+}
+
 // LEDs
 object LEDTR4PinConstraints{
   val pins = Seq("PIN_B19", "PIN_A18", "PIN_D19", "PIN_C19")
@@ -45,11 +50,6 @@ class LEDTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: LE
 class LEDTR4ShellPlacer(val shell: TR4Shell, val shellInput: LEDShellInput)(implicit val valName: ValName)
   extends LEDShellPlacer[TR4Shell] {
   def place(designInput: LEDDesignInput) = new LEDTR4PlacedOverlay(shell, valName.name, designInput, shellInput)
-}
-
-class SysClockTR4ShellPlacer(val shell: AlteraGenericShell, val bank: Int, val shellInput: ClockInputShellInput)(implicit val valName: ValName)
-  extends ClockInputShellPlacer[AlteraGenericShell] {
-  def place(designInput: ClockInputDesignInput) = new SysClockTR4PlacedOverlay(shell, bank, valName.name, designInput, shellInput)
 }
 
 //SWs
