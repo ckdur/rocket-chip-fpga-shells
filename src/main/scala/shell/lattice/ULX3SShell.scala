@@ -177,3 +177,120 @@ class SPIFlashULX3SShellPlacer(val shell: LatticeShell, val which: ULX3SElem, va
   def place(designInput: SPIFlashDesignInput) = new SPIFlashULX3SPlacedOverlay(shell, which, valName.name, designInput, shellInput)
 }
 
+// SPIMedia (Fixed to the SD card)
+class SPIMediaULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: SPIDesignInput, val shellInput: SPIShellInput)
+  extends SPILatticePlacedOverlay(name, designInput, shellInput)
+{
+  shell { InModuleBody {
+    val packagePinsWithPackageIOs = Seq(
+      ("H2", IOPin(io.spi_clk)),
+      ("K2", IOPin(io.spi_cs)),
+      ("J1", IOPin(io.spi_dat(0))),
+      ("J3", IOPin(io.spi_dat(1))),
+      ("H1", IOPin(io.spi_dat(2))),
+      ("K1", IOPin(io.spi_dat(3))))
+
+    packagePinsWithPackageIOs.zipWithIndex.foreach { case ((pin, io), i) =>
+      shell.lpf.addPackagePin(io, pin)
+      shell.lpf.addIOStandard(io, "LVCMOS33", pullMode = if(i == 0) "NONE" else "UP", drive = Some(4))
+    }
+  } }
+}
+
+class SPIMediaULX3SShellPlacer(val shell: LatticeShell, val shellInput: SPIShellInput)(implicit val valName: ValName)
+  extends SPIShellPlacer[LatticeShell] {
+
+  def place(designInput: SPIDesignInput) = new SPIMediaULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
+}
+
+// SPI
+class SPIULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3SElem, name: String, val designInput: SPIDesignInput, val shellInput: SPIShellInput)
+  extends SPILatticePlacedOverlay(name, designInput, shellInput)
+{
+  shell { InModuleBody {
+    val iopins = Seq(IOPin(io.spi_clk),
+      IOPin(io.spi_cs),
+      IOPin(io.spi_dat(0)),
+      IOPin(io.spi_dat(1)),
+      IOPin(io.spi_dat(2)),
+      IOPin(io.spi_dat(3)))
+    val packagePinsWithPackageIOs = iopins.zip(which.GetBindings).map {
+      case (io, elem) =>
+        (elem, io)
+    }
+    println(packagePinsWithPackageIOs)
+
+    packagePinsWithPackageIOs.zipWithIndex.foreach { case ((pin, io), i) =>
+      shell.lpf.addPackagePin(io, pin)
+      shell.lpf.addIOStandard(io, which.GetStandard, pullMode = if(i == 0) "NONE" else "UP", drive = Some(4))
+    }
+  } }
+}
+
+class SPIULX3SShellPlacer(val shell: LatticeShell, val which: ULX3SElem, val shellInput: SPIShellInput)(implicit val valName: ValName)
+  extends SPIShellPlacer[LatticeShell] {
+
+  def place(designInput: SPIDesignInput) = new SPIULX3SPlacedOverlay(shell, which, valName.name, designInput, shellInput)
+}
+
+// JTAG Debug
+class JTAGDebugULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3SElem, name: String, val designInput: JTAGDebugDesignInput, val shellInput: JTAGDebugShellInput)
+  extends JTAGDebugLatticePlacedOverlay(name, designInput, shellInput)
+{
+  shell { InModuleBody {
+    shell.sdc.addClock("JTCK", IOPin(io.jtag_TCK), 10)
+    shell.sdc.addGroup(clocks = Seq("JTCK"))
+    val iopins = Seq(IOPin(io.jtag_TDI),
+      IOPin(io.jtag_TDO),
+      IOPin(io.jtag_TCK),
+      IOPin(io.jtag_TMS),
+      IOPin(io.srst_n))
+    val packagePinsWithPackageIOs = iopins.zip(which.GetBindings).map {
+      case (io, elem) =>
+        (elem, io)
+    }
+    println(packagePinsWithPackageIOs)
+
+    packagePinsWithPackageIOs foreach { case (pin, io) =>
+      shell.lpf.addPackagePin(io, pin)
+      shell.lpf.addIOStandard(io, which.GetStandard, pullMode = "UP")
+    }
+  } }
+}
+
+class JTAGDebugULX3SShellPlacer(val shell: LatticeShell, val which: ULX3SElem, val shellInput: JTAGDebugShellInput)(implicit val valName: ValName)
+  extends JTAGDebugShellPlacer[LatticeShell] {
+
+  def place(designInput: JTAGDebugDesignInput) = new JTAGDebugULX3SPlacedOverlay(shell, which, valName.name, designInput, shellInput)
+}
+
+// UART
+class UARTULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3SElem, name: String, val designInput: UARTDesignInput, val shellInput: UARTShellInput)
+  extends UARTLatticePlacedOverlay(name, designInput, shellInput, false)
+{
+  shell { InModuleBody {
+    val iopins = Seq(IOPin(io.rxd),
+      IOPin(io.txd))
+    val packagePinsWithPackageIOs = iopins.zip(which.GetBindings).map {
+      case (io, elem) =>
+        (elem, io)
+    }
+    println(packagePinsWithPackageIOs)
+
+    packagePinsWithPackageIOs foreach { case (pin, io) =>
+      shell.lpf.addPackagePin(io, pin)
+      shell.lpf.addIOStandard(io, which.GetStandard)
+    }
+  } }
+}
+
+class UARTULX3SShellPlacer(val shell: LatticeShell, val which: ULX3SElem, val shellInput: UARTShellInput)(implicit val valName: ValName)
+  extends UARTShellPlacer[LatticeShell] {
+
+  def place(designInput: UARTDesignInput) = new UARTULX3SPlacedOverlay(shell, which, valName.name, designInput, shellInput)
+}
+
+object ULX3SSDRAMLocs {
+
+}
+
