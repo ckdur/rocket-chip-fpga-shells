@@ -3,7 +3,7 @@ package sifive.fpgashells.shell.lattice
 import freechips.rocketchip.diplomacy._
 import sifive.fpgashells.shell._
 
-abstract class LEDLatticePlacedOverlay(name: String, di: LEDDesignInput, si: LEDShellInput, packagePin: Option[String] = None, ioStandard: String = "3.3-V LVTTL")
+abstract class LEDLatticePlacedOverlay(name: String, di: LEDDesignInput, si: LEDShellInput, packagePin: Option[String] = None, ioStandard: String = "LVCMOS33")
   extends LEDPlacedOverlay(name, di, si)
 {
   def shell: LatticeShell

@@ -8,7 +8,7 @@ import sifive.blocks.devices.pinctrl._
 import sifive.fpgashells.clocks._
 import sifive.fpgashells.devices.common._
 
-class BB extends BlackBox{
+class BB extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle{
     val B = Analog(1.W)
     val T = Input(Bool())
@@ -36,6 +36,14 @@ class BB extends BlackBox{
   def attachTo(analog: Analog) : Unit = {
     attach(analog, io.B)
   }
+
+  setInline("BB.v",
+    """module BB (B, T, I, O);
+      |  inout B;
+      |  input T, I;
+      |  output O;
+      |endmodule
+      |""".stripMargin)
 }
 
 object BB {
@@ -127,7 +135,34 @@ class WRAP_EHXPLLL(params: Map[String, Param], cfg: ecp5pllConfig) extends Black
     case _ => ""
   }.mkString(", ")
   setInline("WRAP_EHXPLLL.v",
-    s"""module WRAP_EHXPLLL #(
+    s"""module EHXPLLL
+       |  #(
+       |    ${parStr}
+       |  ) (
+       |    input RST,
+       |    input STDBY,
+       |    input CLKI,
+       |    output CLKOP,
+       |    output CLKOS,
+       |    output CLKOS2,
+       |    output CLKOS3,
+       |    output CLKFB,
+       |    output CLKINTFB,
+       |    input PHASESEL1,
+       |    input PHASESEL0,
+       |    input PHASEDIR,
+       |    input PHASESTEP,
+       |    input PHASELOADREG,
+       |    input PLLWAKESYNC,
+       |    input ENCLKOP,
+       |    input ENCLKOS,
+       |    input ENCLKOS2,
+       |    input ENCLKOS3,
+       |    input LOCK
+       |  );
+       |endmodule
+       |
+       |module WRAP_EHXPLLL #(
        |    ${parStr}
        |)(
        |    input RST,

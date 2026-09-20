@@ -306,70 +306,6 @@ object ULX3SSDRAMLocs {
     "E19", "D20", "D19", "C20", "E18", "F18", "J18", "J17")
 }
 
-// It is an SDRAM, but we use the DDR placer just to not repeat code
-class SDRAMULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: DDRDesignInput, val shellInput: DDRShellInput)
-  extends DDRPlacedOverlay[ULX3SSDRAM](name, designInput, shellInput)
-{
-  val sdramParams = sdram_bb_cfg (
-    SDRAM_HZ = 50000000,
-    SDRAM_ADDR_W = 24,
-    SDRAM_COL_W = 9,
-    SDRAM_BANK_W = 2,
-    SDRAM_DQM_W = 2,
-    SDRAM_DQ_W = 16,
-    SDRAM_READ_LATENCY = 3
-  )
-  val memifParams             = SDRAMConfig(address = di.baseAddress, sdcfg = sdramParams)
-  val memifClockDomainWrapper = LazyModule(new ClockSinkDomain(take = Some(ClockParameters(sdramParams.SDRAM_HZ.toDouble / 1000000))))
-  val memif                   = memifClockDomainWrapper { LazyModule(new TLSDRAM(memifParams, 4, 4)) }
-  memifClockDomainWrapper.clockNode := ClockGroup() := shell.pllFactory.apply()
-  
-  val ioNode = memif.ioNode.makeSink()
-
-  def overlayOutput = DDROverlayOutput(ddr = memif.node)
-  def ioFactory = new ULX3SSDRAM
-
-  // val getStatus = shell { InModuleBody { Wire(new SDRAMIf) } }
-
-  shell { InModuleBody {
-    io.from_SDRAMIf(ioNode.bundle.asInstanceOf[SDRAMIf])
-
-    ULX3SSDRAMLocs.addr.zipWithIndex.foreach { case (pin, i) =>
-      shell.lpf.addPackagePin(IOPin(io.sdram_addr_o, i), pin)
-      shell.lpf.addIOStandard(IOPin(io.sdram_addr_o, i), "LVCMOS33", drive = Some(4))
-    }
-    ULX3SSDRAMLocs.data.zipWithIndex.foreach { case (pin, i) =>
-      shell.lpf.addPackagePin(IOPin(io.sdram_data_io(i)), pin)
-      shell.lpf.addIOStandard(IOPin(io.sdram_data_io(i)), "LVCMOS33", drive = Some(4))
-    }
-    ULX3SSDRAMLocs.ba.zipWithIndex.foreach { case (pin, i) =>
-      shell.lpf.addPackagePin(IOPin(io.sdram_ba_o(i)), pin)
-      shell.lpf.addIOStandard(IOPin(io.sdram_ba_o(i)), "LVCMOS33", drive = Some(4))
-    }
-    ULX3SSDRAMLocs.dqm.zipWithIndex.foreach { case (pin, i) =>
-      shell.lpf.addPackagePin(IOPin(io.sdram_dqm_o(i)), pin)
-      shell.lpf.addIOStandard(IOPin(io.sdram_dqm_o(i)), "LVCMOS33", drive = Some(4))
-    }
-    shell.lpf.addPackagePin(IOPin(io.sdram_clk_o), ULX3SSDRAMLocs.clk)
-    shell.lpf.addIOStandard(IOPin(io.sdram_clk_o), "LVCMOS33", drive = Some(4))
-    shell.lpf.addPackagePin(IOPin(io.sdram_cke_o), ULX3SSDRAMLocs.cke)
-    shell.lpf.addIOStandard(IOPin(io.sdram_cke_o), "LVCMOS33", drive = Some(4))
-    shell.lpf.addPackagePin(IOPin(io.sdram_cs_o), ULX3SSDRAMLocs.cs)
-    shell.lpf.addIOStandard(IOPin(io.sdram_cs_o), "LVCMOS33", drive = Some(4))
-    shell.lpf.addPackagePin(IOPin(io.sdram_we_o), ULX3SSDRAMLocs.we)
-    shell.lpf.addIOStandard(IOPin(io.sdram_we_o), "LVCMOS33", drive = Some(4))
-    shell.lpf.addPackagePin(IOPin(io.sdram_ras_o), ULX3SSDRAMLocs.ras)
-    shell.lpf.addIOStandard(IOPin(io.sdram_ras_o), "LVCMOS33", drive = Some(4))
-    shell.lpf.addPackagePin(IOPin(io.sdram_cas_o), ULX3SSDRAMLocs.cas)
-    shell.lpf.addIOStandard(IOPin(io.sdram_cas_o), "LVCMOS33", drive = Some(4))
-  } }
-}
-
-class SDRAMULX3SShellPlacer(val shell: LatticeShell, val shellInput: DDRShellInput)(implicit val valName: ValName)
-  extends DDRShellPlacer[LatticeShell] {
-  def place(designInput: DDRDesignInput) = new SDRAMULX3SPlacedOverlay(shell, valName.name, designInput, shellInput)
-}
-
 abstract class ULX3SShell()(implicit p: Parameters) extends LatticeShell
 {
   val pllReset = InModuleBody { Wire(Bool()) }
@@ -380,7 +316,6 @@ abstract class ULX3SShell()(implicit p: Parameters) extends LatticeShell
   val led       = Seq.tabulate(8)(i => Overlay(LEDOverlayKey, new LEDULX3SShellPlacer(this, LEDShellInput(color = "green", number = i))(valName = ValName(s"led_$i"))))
   val switch    = Seq.tabulate(4)(i => Overlay(SwitchOverlayKey, new SwitchULX3SShellPlacer(this, SwitchShellInput(number = i))(valName = ValName(s"switch_$i"))))
   val button    = Seq.tabulate(7)(i => Overlay(ButtonOverlayKey, new ButtonULX3SShellPlacer(this, ButtonShellInput(number = i))(valName = ValName(s"button_$i"))))
-  val sdram     = Overlay(DDROverlayKey, new SDRAMULX3SShellPlacer(this, DDRShellInput()))
 
   // Place the sys_clock at the Shell if the user didn't ask for it
   p(ClockInputOverlayKey).foreach(_.place(ClockInputDesignInput()))

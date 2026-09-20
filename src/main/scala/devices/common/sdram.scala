@@ -221,11 +221,11 @@ case class SDRAMAttachParams
   device: SDRAMConfig,
   controlXType: ClockCrossingType = AsynchronousCrossing()
 ){
-  def attachTo(where: Attachable)(implicit p: Parameters): SDRAM = where {
+  def attachTo(where: Attachable)(implicit p: Parameters): TLSDRAM = where {
     val name = s"sdram_${SDRAMObject.nextId()}"
     val mbus = where.locateTLBusWrapper(MBUS)
     val sdramClockDomainWrapper = LazyModule(new ClockSinkDomain(take = None))
-    val sdram = sdramClockDomainWrapper { LazyModule(new SDRAM(device, mbus.blockBytes, mbus.beatBytes)) }
+    val sdram = sdramClockDomainWrapper { LazyModule(new TLSDRAM(device, mbus.blockBytes, mbus.beatBytes)) }
     sdram.suggestName(name)
 
     mbus.coupleTo(s"mem_${name}") { bus =>

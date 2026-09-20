@@ -41,7 +41,7 @@ class IO_LPF(val name: String)
 abstract class LatticeShell()(implicit p: Parameters) extends IOShell
 {
   val sdc = new SDC("shell.sdc")
-  val lpf = new IO_LPF("assign.tcl")
+  val lpf = new IO_LPF("shell.lpf")
   def pllReset: ModuleValue[Bool]
 
   val pllFactory = new PLLFactory(this, 4, ecp5pll.apply)
