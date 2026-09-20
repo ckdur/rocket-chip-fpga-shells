@@ -6,6 +6,7 @@ import chisel3.util.HasBlackBoxInline
 //import riscvconsole.devices.sdram.SDRAMIf
 import sifive.blocks.devices.pinctrl._
 import sifive.fpgashells.clocks._
+import sifive.fpgashells.devices.common._
 
 class BB extends BlackBox{
   val io = IO(new Bundle{
@@ -447,7 +448,7 @@ object ecp5pll {
   }
 }
 
-/*class ULX3SSDRAM extends Bundle {
+class ULX3SSDRAM extends Bundle {
   val sdram_clk_o = Output(Bool())
   val sdram_cke_o = Output(Bool())
   val sdram_cs_o = Output(Bool())
@@ -468,13 +469,13 @@ object ecp5pll {
     sdram_dqm_o := io.sdram_dqm_o
     sdram_addr_o := io.sdram_addr_o
     sdram_ba_o := io.sdram_ba_o
-    io.sdram_data_i := VecInit((io.sdram_data_o.asBools() zip sdram_data_io).map{
+    io.sdram_data_i := VecInit((io.sdram_data_o.asBools zip sdram_data_io).map{
       case (o, an) =>
         val b = Module(new BB)
         b.io.T := !io.sdram_drive_o
         b.io.I := o
         attach(b.io.B, an)
         b.io.O
-    }).asUInt()
+    }).asUInt
   }
-}*/
+}
