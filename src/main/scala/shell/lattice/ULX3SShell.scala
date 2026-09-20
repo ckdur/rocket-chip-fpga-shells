@@ -296,7 +296,7 @@ object ULX3SSDRAMLocs {
   val ras = "R20"
   val cas = "T19"
   val addr = Seq(
-    "M20", "L19", "L20", "L19", "K20", "K19",
+    "M20", "M19", "L20", "L19", "K20", "K19",
     "K18", "J20", "J19", "H20", "N19", "G20",
     "G19")
   val ba = Seq("P19", "N20")
