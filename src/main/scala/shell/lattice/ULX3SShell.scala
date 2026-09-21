@@ -80,8 +80,8 @@ object GPIOULX3SPinConstraints{
     "C16", "D16", "D14", "E14", "B13", "C13", "D13", "E13"  // gX24-27
   )
   def gpio(np: Int, i: Int) = gpio_locations(i*2 + np)
-  val p = 0
-  val n = 1
+  val gp = 0
+  val gn = 1
 }
 
 trait ULX3SElem {
@@ -242,7 +242,8 @@ class JTAGDebugULX3SPlacedOverlay(val shell: LatticeShell, val which: ULX3SElem,
   shell { InModuleBody {
     shell.sdc.addClock("JTCK", IOPin(io.jtag_TCK), 10)
     shell.sdc.addGroup(clocks = Seq("JTCK"))
-    val iopins = Seq(IOPin(io.jtag_TDI),
+    val iopins = Seq(
+      IOPin(io.jtag_TDI),
       IOPin(io.jtag_TDO),
       IOPin(io.jtag_TCK),
       IOPin(io.jtag_TMS),
