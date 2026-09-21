@@ -273,8 +273,8 @@ class UARTULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designIn
 {
   shell { InModuleBody {
     val packagePinsWithPackageIOs = Seq(
-      (IOPin(io.rxd), "L4"),
-      (IOPin(io.txd), "M1"))
+      (IOPin(io.rxd), "M1"),
+      (IOPin(io.txd), "L4"))
 
     packagePinsWithPackageIOs.zipWithIndex.foreach { case ((io, pin), i) =>
       shell.lpf.addPackagePin(io, pin)
