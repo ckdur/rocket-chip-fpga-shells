@@ -3,10 +3,11 @@ package sifive.fpgashells.ip.lattice
 import chisel3._
 import chisel3.experimental._
 import chisel3.util.HasBlackBoxInline
-//import riscvconsole.devices.sdram.SDRAMIf
 import sifive.blocks.devices.pinctrl._
 import sifive.fpgashells.clocks._
 import sifive.fpgashells.devices.common._
+
+import scala.math.BigDecimal.double2bigDecimal
 
 class BB extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle{
@@ -92,13 +93,13 @@ case class ecp5pllConfig
   out3_hz: BigInt = 0,
   out3_deg: BigInt = 0,
   out3_tol_hz: BigInt = 0,
-  reset_en: Boolean = false,
+  reset_en: Boolean = true,
   standby_en: Boolean = false,
   dynamic_en: Boolean = false
 )
 
 class WRAP_EHXPLLL(params: Map[String, Param], cfg: ecp5pllConfig) extends BlackBox(params)
-  with HasBlackBoxInline with PLLInstance {
+  with HasBlackBoxInline {
   val io = IO(new Bundle {
     val RST = Input(Bool())
     val STDBY = Input(Bool())
@@ -222,18 +223,6 @@ class WRAP_EHXPLLL(params: Map[String, Param], cfg: ecp5pllConfig) extends Black
        |  assign CLKOPA = CLKOP;
        |endmodule
        |""".stripMargin)
-
-  val getInput = io.CLKI
-  val getReset = Some(io.RST)
-  val getLocked = io.LOCK
-  val getClocks = (if(cfg.out0_hz != 0) Seq(io.CLKOPA) else Seq()) ++
-    (if(cfg.out1_hz != 0) Seq(io.CLKOS) else Seq()) ++
-    (if(cfg.out2_hz != 0) Seq(io.CLKOS2) else Seq()) ++
-    (if(cfg.out3_hz != 0) Seq(io.CLKOS3) else Seq())
-  val getClockNames = (if(cfg.out0_hz != 0) Seq("CLKOPA") else Seq()) ++
-    (if(cfg.out1_hz != 0) Seq("CLKOS") else Seq()) ++
-    (if(cfg.out2_hz != 0) Seq("CLKOS2") else Seq()) ++
-    (if(cfg.out3_hz != 0) Seq("CLKOS3") else Seq())
 }
 
 class ecp5pll(params: Map[String, Param], cfg: ecp5pllConfig) extends Module {
@@ -248,7 +237,7 @@ class ecp5pll(params: Map[String, Param], cfg: ecp5pllConfig) extends Module {
   })
   val PHASESEL_HW = WireInit(io.phasesel - 1.U(2.W))
   val bb = Module(new WRAP_EHXPLLL(params, cfg))
-  bb.io.RST := false.B
+  bb.io.RST := reset.asBool
   bb.io.STDBY := false.B
   bb.io.CLKI := clock
   io.clk_o(0) := bb.io.CLKOPA
@@ -365,8 +354,7 @@ object ecp5pll {
     }
     phase_count_x8
   }
-
-  def get_map_params(cfg: ecp5pllConfig): Map[String, Param] = {
+  def getMapParams(cfg: ecp5pllConfig): Map[String, Param] = {
     import cfg._
     val (params_refclk_div, params_feedback_div, params_output_div) = F_ecp5pll(cfg)
     val params_fout = in_hz * params_feedback_div / params_refclk_div
@@ -435,52 +423,111 @@ object ecp5pll {
       "PLL_LOCK_MODE" -> IntParam(0)
     )
   }
-
-  // Old compatibility one
-  def applyOld(cfg: ecp5pllConfig): ecp5pll = {
-    Module(new ecp5pll(get_map_params(cfg), cfg))
+  def apply(cfg: ecp5pllConfig): ecp5pll = {
+    Module(new ecp5pll(getMapParams(cfg), cfg))
   }
-
-  def apply(param: PLLParameters): PLLInstance = {
-    require(param.req.size <= 4, "Too many clocks")
-
+  def apply(c: PLLParameters): ecp5pll = {
     val cfg = ecp5pllConfig(
-      in_hz = BigDecimal(param.input.freqMHz * 1000000.0).toBigInt,
-      out0_hz = if(param.req.size >= 1) BigDecimal(param.req(0).freqMHz * 1000000.0).toBigInt else 0,
-      out0_deg = if(param.req.size >= 1) BigDecimal(param.req(0).phaseDeg).toBigInt else 0,
-      out0_tol_hz = 0, // TODO: Maybe is good to put some tolerance
-      out1_hz = if(param.req.size >= 2) BigDecimal(param.req(1).freqMHz * 1000000.0).toBigInt else 0,
-      out1_deg = if(param.req.size >= 2) BigDecimal(param.req(1).phaseDeg).toBigInt else 0,
+      in_hz = (c.input.freqMHz * 1000000).toBigInt,
+      out0_hz = if(c.req.size >= 1) (c.req(0).freqMHz * 1000000).toBigInt else 0,
+      out0_deg = if(c.req.size >= 1) c.req(0).phaseDeg.toBigInt else 0,
+      out0_tol_hz = 0,
+      out1_hz = if(c.req.size >= 2) (c.req(1).freqMHz * 1000000).toBigInt else 0,
+      out1_deg = if(c.req.size >= 2) c.req(1).phaseDeg.toBigInt else 0,
       out1_tol_hz = 0,
-      out2_hz = if(param.req.size >= 3) BigDecimal(param.req(2).freqMHz * 1000000.0).toBigInt else 0,
-      out2_deg = if(param.req.size >= 3) BigDecimal(param.req(2).phaseDeg).toBigInt else 0,
+      out2_hz = if(c.req.size >= 3) (c.req(2).freqMHz * 1000000).toBigInt else 0,
+      out2_deg = if(c.req.size >= 3) c.req(2).phaseDeg.toBigInt else 0,
       out2_tol_hz = 0,
-      out3_hz = if(param.req.size >= 4) BigDecimal(param.req(3).freqMHz * 1000000.0).toBigInt else 0,
-      out3_deg = if(param.req.size >= 4) BigDecimal(param.req(3).phaseDeg).toBigInt else 0,
+      out3_hz = if(c.req.size >= 4) (c.req(3).freqMHz * 1000000).toBigInt else 0,
+      out3_deg = if(c.req.size >= 4) c.req(3).phaseDeg.toBigInt else 0,
       out3_tol_hz = 0,
-      reset_en = true, // Enabled to explicitly drive the reset
+      reset_en = true,
       standby_en = false,
       dynamic_en = false
     )
-    val params = get_map_params(cfg)
-    val bb = Module(new WRAP_EHXPLLL(params, cfg))
-
-    bb.io.RST := false.B
-    bb.io.STDBY := false.B
-    bb.io.CLKI := false.B.asClock
-    bb.io.PHASESEL1 := true.B
-    bb.io.PHASESEL0 := true.B
-    bb.io.PHASEDIR := false.B
-    bb.io.PHASESTEP := false.B
-    bb.io.PHASELOADREG := false.B
-    bb.io.PLLWAKESYNC := false.B
-    bb.io.ENCLKOP := false.B
-    bb.io.ENCLKOS := false.B
-    bb.io.ENCLKOS2 := false.B
-    bb.io.ENCLKOS3 := false.B
-
-    bb
+    apply(cfg)
   }
+}
+
+class ecp5pllCompat(c: PLLParameters) extends RawModule with PLLInstance {
+  val io = IO(new Bundle {
+    val clock = Input(Clock())
+    val reset = Input(Bool())
+    val clk_o = Vec(c.req.size, Output(Clock()))
+    val standby = Input(Bool())
+    val phasesel = Input(UInt(2.W))
+    val phasedir = Input(Bool())
+    val phasestep = Input(Bool())
+    val phaseloadreg = Input(Bool())
+    val locked = Output(Bool())
+  })
+  val m = withClockAndReset(io.clock, io.reset){ecp5pll(c)}
+  m.io.standby := io.standby
+  m.io.phasesel := io.phasesel
+  m.io.phasedir := io.phasedir
+  m.io.phasestep := io.phasestep
+  m.io.phaseloadreg := io.phaseloadreg
+  io.locked := m.io.locked
+  (io.clk_o zip m.io.clk_o).foreach { case (clko, mclko) =>
+    clko := mclko
+  }
+  override def desiredName = c.name
+  def getClocks: Seq[Clock] = io.clk_o
+  def getInput = io.clock
+  def getReset = Some(io.reset)
+  def getLocked = io.locked
+  def getClockNames = Seq(
+    s"${c.name}.m.bb.CLKOPA",
+    s"${c.name}.m.bb.CLKOS",
+    s"${c.name}.m.bb.CLKOS2",
+    s"${c.name}.m.bb.CLKOS3"
+  ).take(c.req.size)
+  def tieoffextra = {
+    io.standby := false.B
+    io.phasesel := 0.U
+    io.phasedir := false.B
+    io.phasestep := false.B
+    io.phaseloadreg := false.B
+  }
+}
+
+// This is a FPGA-Only construct, which uses
+// 'initial' constructions
+class PowerOnResetLatticeFPGAOnly extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val aresetn = Input(Bool())
+    val clock = Input(Clock())
+    val power_on_reset = Output(Bool())
+  })
+
+  setInline(s"PowerOnResetLatticeFPGAOnly.v",
+    s"""(* keep_hierarchy = "yes" *)
+       |module PowerOnResetLatticeFPGAOnly(
+       |  input wire aresetn,
+       |  input wire clock,
+       |  output wire power_on_reset
+       |);
+       |  (* dont_touch = "true" *) reg por = 1'b0;
+       |  initial begin
+       |    por <= 1'b0;
+       |  end
+       |  always @(posedge clock) begin
+       |    por <= aresetn;
+       |  end
+       |  assign power_on_reset = !por;
+       |endmodule
+       |""".stripMargin)
+}
+
+object PowerOnResetLatticeFPGAOnly {
+  def apply (clk: Clock, name: String, areset: Bool): Bool = {
+    val por = Module(new PowerOnResetLatticeFPGAOnly())
+    por.suggestName(name)
+    por.io.aresetn := ~areset
+    por.io.clock := clk
+    por.io.power_on_reset
+  }
+  def apply (clk: Clock, areset: Bool): Bool = apply(clk, "fpga_power_on", areset)
 }
 
 class ULX3SSDRAM extends Bundle {
@@ -494,23 +541,4 @@ class ULX3SSDRAM extends Bundle {
   val sdram_addr_o = Output(UInt(13.W))
   val sdram_ba_o = Output(UInt(2.W))
   val sdram_data_io = Vec(16, Analog(1.W))
-  def from_SDRAMIf(io: SDRAMIf) = {
-    sdram_clk_o := io.sdram_clk_o
-    sdram_cke_o := io.sdram_cke_o
-    sdram_cs_o := io.sdram_cs_o
-    sdram_ras_o := io.sdram_ras_o
-    sdram_cas_o := io.sdram_cas_o
-    sdram_we_o := io.sdram_we_o
-    sdram_dqm_o := io.sdram_dqm_o
-    sdram_addr_o := io.sdram_addr_o
-    sdram_ba_o := io.sdram_ba_o
-    io.sdram_data_i := VecInit((io.sdram_data_o.asBools zip sdram_data_io).map{
-      case (o, an) =>
-        val b = Module(new BB)
-        b.io.T := !io.sdram_drive_o
-        b.io.I := o
-        attach(b.io.B, an)
-        b.io.O
-    }).asUInt
-  }
 }

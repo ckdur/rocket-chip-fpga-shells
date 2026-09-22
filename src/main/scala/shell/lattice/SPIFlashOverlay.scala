@@ -2,12 +2,12 @@ package sifive.fpgashells.shell.lattice
 
 import chisel3._
 import chisel3.experimental.attach
-import chisel3.util.Cat
 import freechips.rocketchip.diplomacy._
 import sifive.fpgashells.ip.lattice._
 import sifive.fpgashells.shell._
 
-abstract class SPIFlashLatticePlacedOverlay(name: String, di: SPIFlashDesignInput, si: SPIFlashShellInput)
+abstract class SPIFlashLatticePlacedOverlay
+(name: String, di: SPIFlashDesignInput, si: SPIFlashShellInput)
   extends SPIFlashPlacedOverlay(name, di, si)
 {
   def shell: LatticeShell
@@ -24,7 +24,7 @@ abstract class SPIFlashLatticePlacedOverlay(name: String, di: SPIFlashDesignInpu
     cs.io.T := false.B
 
     tlqspiSink.bundle.dq.zip(io.qspi_dq).zipWithIndex.foreach { case ((design_dq, io_dq), i) =>
-      val dq = BB.apply.suggestName(s"${name}_dq_${i}_buf")
+      val dq = Module(new BB).suggestName(s"${name}_dq_${i}_buf")
       dq.io.I := design_dq.o
       dq.io.T := !design_dq.oe
       design_dq.i := dq.io.O

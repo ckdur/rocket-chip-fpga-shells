@@ -3,8 +3,16 @@ package sifive.fpgashells.shell.lattice
 import freechips.rocketchip.diplomacy._
 import sifive.fpgashells.shell._
 
-abstract class LEDLatticePlacedOverlay(name: String, di: LEDDesignInput, si: LEDShellInput, packagePin: Option[String] = None, ioStandard: String = "LVCMOS33")
-  extends LEDPlacedOverlay(name, di, si)
+abstract class LEDLatticePlacedOverlay
+(
+  name: String,
+  di: LEDDesignInput,
+  si: LEDShellInput,
+  packagePin: Option[String] = None,
+  ioStandard: String = "LVCMOS33",
+  pullmode: String = "DOWN",
+  drive: Option[Int] = Some(4)
+) extends LEDPlacedOverlay(name, di, si)
 {
   def shell: LatticeShell
 
@@ -12,27 +20,9 @@ abstract class LEDLatticePlacedOverlay(name: String, di: LEDDesignInput, si: LED
     io := ledWire // could/should put OBUFs here?
 
     val ios = IOPin.of(io)
-
     (packagePin.toSeq zip ios) foreach { case (pin, io) =>
       shell.lpf.addPackagePin(io, pin)
-      shell.lpf.addIOStandard(io, ioStandard, drive=Some(4))
+      shell.lpf.addIOBUF(io, ioStandard, pullmode, drive)
     }
   } }
 }
-
-/*
-   Copyright 2016 SiFive, Inc.
-   Copyright 2025 Ckristian Duran
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/

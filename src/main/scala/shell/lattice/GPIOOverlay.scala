@@ -7,7 +7,8 @@ import org.chipsalliance.cde.config.Parameters
 import sifive.fpgashells.ip.lattice._
 import sifive.fpgashells.shell._
 
-abstract class GPIOLatticePlacedOverlay(name: String, di: GPIODesignInput, si: GPIOShellInput)
+abstract class GPIOLatticePlacedOverlay
+(name: String, di: GPIODesignInput, si: GPIOShellInput)
   extends GPIOPlacedOverlay(name, di, si)
 {
   def shell: LatticeShell
@@ -18,6 +19,7 @@ abstract class GPIOLatticePlacedOverlay(name: String, di: GPIODesignInput, si: G
       m.io.I := tlpin.o.oval
       m.io.T := !tlpin.o.oe
       tlpin.i.ival := m.io.O
+      tlpin.i.po.foreach(_ := false.B)
       // m.fromBase(tlpin.toBasePin()) // This doesn't work
       attach(m.io.B, io.gpio(idx))
     } }
@@ -35,9 +37,15 @@ abstract class GPIODirectLatticePlacedOverlay(val name: String, val designInput:
 
   def ioFactory = new ShellGPIOPortIO(designInput.width)
 
-  val gpio = shell { InModuleBody { io.gpio } }
+  val gpio = shell { InModuleBody { io.gpio /*Wire(Vec(designInput.width, Analog(1.W)))*/ } }
 
   def overlayOutput = GPIODirectLatticeOverlayOutput(gpio)
 
   def shell: LatticeShell
+
+  /*shell { InModuleBody {
+    gpio.zipWithIndex.foreach{ case (pin, idx) =>
+      attach(pin, io.gpio(idx))
+    }
+  } }*/
 }

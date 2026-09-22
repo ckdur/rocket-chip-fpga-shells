@@ -1,11 +1,9 @@
-package sifive.fpgashells.devices.common
+package sifive.fpgashells.sdram
 
 import chisel3._
-import chisel3.experimental.{Analog, IntParam, StringParam, attach}
+import chisel3.experimental.IntParam
 import chisel3.util._
 import org.chipsalliance.cde.config.{Field, Parameters}
-import freechips.rocketchip.util._
-import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.interrupts._
 import freechips.rocketchip.prci._
@@ -13,43 +11,9 @@ import freechips.rocketchip.regmapper._
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.devices.tilelink._
+import freechips.rocketchip.util._
+import sifive.fpgashells.shell._
 
-case class sdram_bb_cfg
-(
-  SDRAM_HZ: BigInt = 50000000,
-  SDRAM_ADDR_W: Int = 24,
-  SDRAM_COL_W: Int = 9,
-  SDRAM_BANK_W: Int = 2,
-  SDRAM_DQM_W: Int = 2,
-  SDRAM_DQ_W: Int = 16,
-  SDRAM_READ_LATENCY: Int  = 3
-) {
-  val SDRAM_MHZ = SDRAM_HZ/1000000
-  val SDRAM_BANKS = 1 << SDRAM_BANK_W
-  val SDRAM_ROW_W = SDRAM_ADDR_W - SDRAM_COL_W - SDRAM_BANK_W
-  val SDRAM_REFRESH_CNT = 1 << SDRAM_ROW_W
-  val SDRAM_START_DELAY = 100000 / (1000 / SDRAM_MHZ) // 100 uS
-  val SDRAM_REFRESH_CYCLES = (64000*SDRAM_MHZ) / SDRAM_REFRESH_CNT-1
-}
-
-trait HasSDRAMIf{
-  this: Bundle =>
-  val cfg: sdram_bb_cfg
-  val sdram_clk_o = Output(Bool())
-  val sdram_cke_o = Output(Bool())
-  val sdram_cs_o = Output(Bool())
-  val sdram_ras_o = Output(Bool())
-  val sdram_cas_o = Output(Bool())
-  val sdram_we_o = Output(Bool())
-  val sdram_dqm_o = Output(UInt(cfg.SDRAM_DQM_W.W))
-  val sdram_addr_o = Output(UInt(cfg.SDRAM_ROW_W.W))
-  val sdram_ba_o = Output(UInt(cfg.SDRAM_BANK_W.W))
-  val sdram_data_o = Output(UInt(cfg.SDRAM_DQ_W.W))
-  val sdram_data_i = Input(UInt(cfg.SDRAM_DQ_W.W))
-  val sdram_drive_o = Output(Bool())
-}
-
-class SDRAMIf(val cfg: sdram_bb_cfg = sdram_bb_cfg()) extends Bundle with HasSDRAMIf
 
 trait HasWishboneIf{
   this: Bundle =>
@@ -94,12 +58,12 @@ case class SDRAMConfig // Periphery Config
   address: BigInt,
   sdcfg: sdram_bb_cfg = sdram_bb_cfg()
 ) {
-  val size: BigInt = (1 << sdcfg.SDRAM_ADDR_W) * sdcfg.SDRAM_DQ_W / 8
+  val size: BigInt = sdcfg.size
   //0x2000000L, // 32Mb (256Mbits)
   //0x4000000L, // 64Mb (512Mbits)
 }
 
-class TLSDRAM(cfg: SDRAMConfig, blockBytes: Int, beatBytes: Int)(implicit p: Parameters) extends LazyModule with HasClockDomainCrossing{
+class SDRAM(cfg: SDRAMConfig)(implicit p: Parameters) extends LazyModule with HasClockDomainCrossing{
 
   val device = new MemoryDevice
   val tlcfg = TLSlaveParameters.v1(
@@ -117,19 +81,17 @@ class TLSDRAM(cfg: SDRAMConfig, blockBytes: Int, beatBytes: Int)(implicit p: Par
     beatBytes = 4
   )
   val sdramnode = TLManagerNode(Seq(tlportcfg))
-  val node = TLBuffer()
 
   // Create the IO node, and stop trying to get something from elsewhere
   val ioNode = BundleBridgeSource(() => (new SDRAMIf(cfg.sdcfg)).cloneType)
-  val port = InModuleBody { ioNode.bundle }
 
   // Connections of the node
-  sdramnode := TLFragmenter(4, blockBytes) := TLWidthWidget(beatBytes) := node
-
+  val node: TLInwardNode = sdramnode
   val controlXing: TLInwardClockCrossingHelper = this.crossIn(node)
 
   lazy val module = new LazyModuleImp(this) {
     val sdramimp = Module(new sdram(cfg.sdcfg))
+    val port = ioNode.bundle
 
     // Clock and Reset
     sdramimp.io.clk_i := clock
@@ -221,25 +183,28 @@ case class SDRAMAttachParams
   device: SDRAMConfig,
   controlXType: ClockCrossingType = AsynchronousCrossing()
 ){
-  def attachTo(where: Attachable)(implicit p: Parameters): TLSDRAM = where {
+
+  def attachTo(where: Attachable)(implicit p: Parameters): SDRAM = where {
     val name = s"sdram_${SDRAMObject.nextId()}"
-    val mbus = where.locateTLBusWrapper(MBUS)
+    val tlbus = where.locateTLBusWrapper(MBUS)
     val sdramClockDomainWrapper = LazyModule(new ClockSinkDomain(take = None))
-    val sdram = sdramClockDomainWrapper { LazyModule(new TLSDRAM(device, mbus.blockBytes, mbus.beatBytes)) }
+    val sdram = sdramClockDomainWrapper { LazyModule(new SDRAM(device)) }
     sdram.suggestName(name)
 
-    mbus.coupleTo(s"mem_${name}") { bus =>
-      sdramClockDomainWrapper.clockNode := (controlXType match {
+    tlbus.coupleTo(s"mem_${name}") { bus =>
+      (controlXType match {
         case _: SynchronousCrossing =>
-          mbus.dtsClk.map(_.bind(sdram.device))
-          mbus.fixedClockNode
+          tlbus.dtsClk.map(_.bind(sdram.device))
+          sdramClockDomainWrapper.clockNode := tlbus.fixedClockNode
         case _: RationalCrossing =>
-          mbus.clockNode
+          sdramClockDomainWrapper.clockNode := tlbus.clockNode
         case _: AsynchronousCrossing =>
-          ClockGroup() := where.allClockGroupsNode
+          val sdramClockGroup = ClockGroup()
+          sdramClockGroup := where.allClockGroupsNode
+          sdramClockDomainWrapper.clockNode := sdramClockGroup
       })
 
-      sdram.controlXing(controlXType) := bus
+      sdram.controlXing(controlXType) := TLFragmenter(4, tlbus.blockBytes) := TLWidthWidget(tlbus.beatBytes) := bus
     }
 
     sdram
@@ -254,41 +219,7 @@ trait HasSDRAM { this: BaseSubsystem =>
   }
 }
 
-trait HasSDRAMModuleImp extends LazyModuleImp {
+trait HasSDRAMModuleImp extends LazyRawModuleImp {
   val outer: HasSDRAM
   val sdramio = outer.sdramNodes.zipWithIndex.map { case(n,i) => n.makeIO()(ValName(s"sdram_$i")) }
-}
-
-class sdramsim(val cfg: sdram_bb_cfg) extends BlackBox(
-  Map(
-    "SDRAM_DATA_W" -> IntParam(cfg.SDRAM_DQ_W),
-    "SDRAM_DQM_W" -> IntParam(cfg.SDRAM_DQM_W)
-  )
-)
-  with HasBlackBoxResource {
-  val io = IO(Flipped(new SDRAMIf {
-    val reset = Output(Bool())
-  }))
-  addResource("/sdram/sdramsim.v")
-  addResource("/sdram/sdramsim.cc")
-  addResource("/sdram/sdramsim.h")
-}
-
-object sdramsim {
-  def apply(io: SDRAMIf, reset: Bool) = {
-    val sdram = Module(new sdramsim(io.cfg))
-    sdram.io.sdram_clk_o := io.sdram_clk_o
-    sdram.io.sdram_cke_o := io.sdram_cke_o
-    sdram.io.sdram_cs_o := io.sdram_cs_o
-    sdram.io.sdram_ras_o := io.sdram_ras_o
-    sdram.io.sdram_cas_o := io.sdram_cas_o
-    sdram.io.sdram_we_o := io.sdram_we_o
-    sdram.io.sdram_dqm_o := io.sdram_dqm_o
-    sdram.io.sdram_addr_o := io.sdram_addr_o
-    sdram.io.sdram_ba_o := io.sdram_ba_o
-    sdram.io.sdram_data_o := io.sdram_data_o
-    sdram.io.sdram_drive_o := io.sdram_drive_o
-    sdram.io.reset := reset
-    io.sdram_data_i := sdram.io.sdram_data_i
-  }
 }
