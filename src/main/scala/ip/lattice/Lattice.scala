@@ -5,7 +5,6 @@ import chisel3.experimental._
 import chisel3.util.HasBlackBoxInline
 import sifive.blocks.devices.pinctrl._
 import sifive.fpgashells.clocks._
-import sifive.fpgashells.devices.common._
 
 import scala.math.BigDecimal.double2bigDecimal
 

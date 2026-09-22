@@ -63,7 +63,7 @@ case class SDRAMConfig // Periphery Config
   //0x4000000L, // 64Mb (512Mbits)
 }
 
-class SDRAM(cfg: SDRAMConfig)(implicit p: Parameters) extends LazyModule with HasClockDomainCrossing{
+class TLSDRAM(cfg: SDRAMConfig)(implicit p: Parameters) extends LazyModule with HasClockDomainCrossing{
 
   val device = new MemoryDevice
   val tlcfg = TLSlaveParameters.v1(
@@ -184,11 +184,11 @@ case class SDRAMAttachParams
   controlXType: ClockCrossingType = AsynchronousCrossing()
 ){
 
-  def attachTo(where: Attachable)(implicit p: Parameters): SDRAM = where {
+  def attachTo(where: Attachable)(implicit p: Parameters): TLSDRAM = where {
     val name = s"sdram_${SDRAMObject.nextId()}"
     val tlbus = where.locateTLBusWrapper(MBUS)
     val sdramClockDomainWrapper = LazyModule(new ClockSinkDomain(take = None))
-    val sdram = sdramClockDomainWrapper { LazyModule(new SDRAM(device)) }
+    val sdram = sdramClockDomainWrapper { LazyModule(new TLSDRAM(device)) }
     sdram.suggestName(name)
 
     tlbus.coupleTo(s"mem_${name}") { bus =>

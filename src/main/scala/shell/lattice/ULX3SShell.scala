@@ -344,7 +344,7 @@ class SDRAMULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designI
   extends SDRAMPlacedOverlay[ULX3SSDRAM](name, designInput, shellInput)
 {
   val cfg = p(ULX3SSDRAMCfg)
-  val mig = LazyModule(new SDRAM(SDRAMConfig(di.baseAddress, cfg)))
+  val mig = LazyModule(new TLSDRAM(SDRAMConfig(di.baseAddress, cfg)))
   val sinkio = mig.ioNode.makeSink()
   def overlayOutput = SDRAMOverlayOutput(mig.controlXing(AsynchronousCrossing()))
   def ioFactory = new ULX3SSDRAM

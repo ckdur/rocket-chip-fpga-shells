@@ -2,13 +2,14 @@
 package sifive.fpgashells.devices.xilinx.xilinxnexys4ddrmig
 
 import chisel3._
-import chisel3.experimental.{Analog,attach}
+import chisel3.experimental.{Analog, attach}
 import freechips.rocketchip.amba.axi4._
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.interrupts._
+import freechips.rocketchip.prci._
 import sifive.fpgashells.ip.xilinx.nexys4ddrmig.{Nexys4DDRMIGIOClocksReset, Nexys4DDRMIGIODDR, nexys4ddrmig}
 
 case class XilinxNexys4DDRMIGParams(
