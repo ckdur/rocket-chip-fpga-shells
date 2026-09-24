@@ -284,7 +284,8 @@ class UARTULX3SShellPlacer(val shell: LatticeShell, val shellInput: UARTShellInp
 case object SDOverlayKey extends Field[Seq[DesignPlacer[SPIDesignInput, SPIShellInput, SPIOverlayOutput]]](Nil)
 
 object SDULX3SPinConstraints{
-  val pins = Seq("H2", "K2", "J1", "J3", "H1", "K1", "P5", "N5")
+  // DAT 2 AND 3 ARE SHIFTED TO WP AND CDN
+  val pins = Seq("H2", "K2", "J1", "J3", /*"H1", "K1", */"P5", "N5")
 }
 
 class SDULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInput: SPIDesignInput, val shellInput: SPIShellInput)
@@ -296,9 +297,7 @@ class SDULX3SPlacedOverlay(val shell: LatticeShell, name: String, val designInpu
       IOPin(io.spi_dat(0)),
       IOPin(io.spi_dat(1)),
       IOPin(io.spi_dat(2)),
-      IOPin(io.spi_dat(3)),
-      IOPin(io.spi_wp),
-      IOPin(io.spi_cdn))
+      IOPin(io.spi_dat(3)))
     val packagePinsWithPackageIOs = iopins.zip(SDULX3SPinConstraints.pins).map {
       case (io, pins) =>
         (pins, io)
@@ -424,8 +423,10 @@ abstract class ULX3SShell()(implicit p: Parameters) extends LatticeShell
   val sd        = Overlay(SDOverlayKey, new SDULX3SShellPlacer(this, SPIShellInput()))
   val jtagseq   = Seq(0 -> 0, 1 -> 0, 2 -> 0, 3 -> 0, 4 -> 0)
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugULX3SShellPlacer(this, ULX3SGPIOGroup(jtagseq), JTAGDebugShellInput()))
+  val spiseq    = Seq(21 -> 0, 22 -> 0, 23 -> 0, 24 -> 0, 25 -> 0, 26 -> 0)
+  val spi       = Overlay(SPIOverlayKey, new SPIULX3SShellPlacer(this, ULX3SGPIOGroup(spiseq), SPIShellInput()))
   val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashULX3SShellPlacer(this, SPIFlashShellInput())(ValName(s"qspi")))
-  val gpioseqall = Seq.tabulate(27 - 5)(i => (i + 5) -> 0) ++ Seq.tabulate(27)(i => i -> 1)
+  val gpioseqall = Seq.tabulate(27 - 5 - 6)(i => (i + 5) -> 0) ++ Seq.tabulate(27)(i => i -> 1)
   val gpioseq   = gpioseqall.take(p(PeripheryGPIOKey).head.width)
   val gpio      = Overlay(GPIOOverlayKey, new GPIOPeripheralULX3SShellPlacer(this, ULX3SGPIOGroup(gpioseq), GPIOShellInput()))
   val sdram     = Overlay(SDRAMOverlayKey, new SDRAMULX3SShellPlacer(this, SDRAMShellInput()))

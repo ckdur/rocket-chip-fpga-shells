@@ -12,8 +12,6 @@ class ShellLatticeSPIPortIO extends Bundle {
   val spi_clk = Analog(1.W)
   val spi_cs = Analog(1.W)
   val spi_dat = Vec(4, Analog(1.W))
-  val spi_wp = Analog(1.W)
-  val spi_cdn = Analog(1.W)
 }
 
 abstract class SPILatticePlacedOverlay
@@ -42,7 +40,7 @@ abstract class SPILatticePlacedOverlay
     cs0.io.T := false.B
 
     // The actual spi_dat is the first two spi_dat and the wp dat
-    val io_truedat: Seq[Analog] = Seq(io.spi_dat(0), io.spi_dat(1), io.spi_wp, io.spi_cdn)
+    val io_truedat: Seq[Analog] = Seq(io.spi_dat(0), io.spi_dat(1), io.spi_dat(2), io.spi_dat(3))
 
     // IMPORTANT NOTE: We only take the first 2. dp(2) and dp(3) are not connected at all
     tlspiSink.bundle.dq.zip(io_truedat).take(2).zipWithIndex.foreach { case ((design_dq, io_dq), i) =>
