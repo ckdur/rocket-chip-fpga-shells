@@ -426,7 +426,7 @@ abstract class ULX3SShell()(implicit p: Parameters) extends LatticeShell
   val spiseq    = Seq(21 -> 0, 22 -> 0, 23 -> 0, 24 -> 0, 25 -> 0, 26 -> 0)
   val spi       = Overlay(SPIOverlayKey, new SPIULX3SShellPlacer(this, ULX3SGPIOGroup(spiseq), SPIShellInput()))
   val qspi      = Overlay(SPIFlashOverlayKey, new SPIFlashULX3SShellPlacer(this, SPIFlashShellInput())(ValName(s"qspi")))
-  val gpioseqall = Seq.tabulate(27 - 5 - 6)(i => (i + 5) -> 0) ++ Seq.tabulate(27)(i => i -> 1)
+  val gpioseqall = Seq.tabulate(27 - 5 - 6)(i => (i + 5) -> 0) ++ Seq.tabulate(27 - 9)(i => i -> 1)
   val gpioseq   = gpioseqall.take(p(PeripheryGPIOKey).head.width)
   val gpio      = Overlay(GPIOOverlayKey, new GPIOPeripheralULX3SShellPlacer(this, ULX3SGPIOGroup(gpioseq), GPIOShellInput()))
   val sdram     = Overlay(SDRAMOverlayKey, new SDRAMULX3SShellPlacer(this, SDRAMShellInput()))
