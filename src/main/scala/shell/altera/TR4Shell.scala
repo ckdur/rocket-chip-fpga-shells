@@ -674,6 +674,17 @@ class DDRTR4PlacedOverlay(val shell: TR4Shell, name: String, val designInput: DD
     shell.io_tcl.addDriveStrength(IOPin(io.memory_mem_we_n), "MAXIMUM CURRENT")
   } }
 
+  // The UniPHY clocks (pll_afi_clk, ...) are created by the IP's own SDC, which Quartus reads after the
+  // shell SDC, so they cannot be put in a clock group here (get_clocks matches nothing yet). Instead, cut
+  // the AXI4 async crossing of memif by register name: everything in memif|island|axi4asink is clocked by
+  // pll_afi_clk and everything in memif|axi4asource by the design clock, so all paths between them are
+  // async-FIFO crossings (gray pointers, valid synchronizers, FIFO data), safe by construction.
+  shell.sdc.addFalsePath("-from [get_keepers {*memif|island|axi4asink|*}] -to [get_keepers {*memif|axi4asource|*}]")
+  shell.sdc.addFalsePath("-from [get_keepers {*memif|axi4asource|*}] -to [get_keepers {*memif|island|axi4asink|*}]")
+  // The controller reset (afi domain) is also used as async reset in the design clock domain (reset wrangler
+  // debounce/deglitch, axi4asource). It only toggles during calibration, with no traffic: async reset crossing.
+  shell.sdc.addFalsePath("-from [get_keepers {*memif|island|blackbox|mem|*|ureset_ctl_reset_clk|reset_reg*}] -to [get_clocks {sys_clock}]")
+
   // TODO: Highly cursed. The qip will create this clock, and there is no known way to retrieve it
   // NOTE: If there is a way to retrieve the .sdc from this IP, maybe there is a possibility
 

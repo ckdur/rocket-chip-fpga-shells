@@ -50,6 +50,12 @@ class AlteraGenericSDC(name: String) extends SDC(name) {
     addRawClock(s"create_generated_clock -add -name \"${name}\" -source ${pinin.sdcPin} -multiply_by ${ratio.num} -divide_by ${ratio.den} -phase ${phaseDeg} ${opath}")
   }
 
+  // Raw set_false_path (arguments after the command). Keeper-name based false paths do not need the clocks
+  // to exist yet, unlike clock groups (e.g. clocks created by an IP's own SDC, read after the shell SDC).
+  def addFalsePath(args: => String): Unit = {
+    addRawFalse(s"set_false_path ${args}")
+  }
+
   def addGroupOnlyNames(clocks: => Seq[String] = Nil, pins: => Seq[IOPin] = Nil) {
     def thunk = {
       val clocksList = clocks
